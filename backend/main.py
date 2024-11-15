@@ -5,32 +5,33 @@ import pymysql
 
 app = Flask(__name__)
 
-import pymysql
 
-try:
-    db = pymysql.connect(host="localhost", 
-                          port=3306,
-                          user="root", 
-                          password="", 
-                          database="fantasysport", 
-                          charset="utf8mb4", 
-                          cursorclass=pymysql.cursors.DictCursor)
-    with db.cursor() as cursor:
-        cursor.execute("SELECT * FROM Waivers")
-        result = cursor.fetchone()
-        print("Connection successful! MySQL version:", result)
-except pymysql.MySQLError as e:
-    print("Error connecting to the database:", e)
+# try:
+#     db = pymysql.connect(host="localhost", 
+#                           port=3306,
+#                           user="root", 
+#                           password="", 
+#                           database="fantasysport", 
+#                           charset="utf8mb4", 
+#                           cursorclass=pymysql.cursors.DictCursor)
+#     with db.cursor() as cursor:
+#         cursor.execute("SELECT * FROM Users")
+#         result = cursor.fetchone()
+#         print("Connection successful! MySQL version:", result)
+# except pymysql.MySQLError as e:
+#     print("Error connecting to the database:", e)
 
-finally:
-    # Always close the connection
-    if db:
-        db.close()
+# finally:
+#     # Always close the connection
+#     if db:
+#         db.close()
 
 
-@app.route('/test')
+@app.route('/login')
 def home():
     return "Hello, World!"
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
