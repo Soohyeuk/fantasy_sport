@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_cors import CORS
 from flask_restful import Api, Resource
 import pymysql 
+from flask_cors import CORS 
 
 app = Flask(__name__)
-
+CORS(app)
 
 # try:
 #     db = pymysql.connect(host="localhost", 
@@ -31,7 +32,9 @@ app = Flask(__name__)
 def home():
     return "Hello, World!"
 
-
+@app.route('/test', methods=['GET'])
+def test(): 
+    return jsonify(simple=12)
 
 if __name__ == "__main__":
     app.run(debug=True)
