@@ -1,12 +1,14 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import pymysql
-import hashlib
 import jwt
 import datetime
 from flask import g
+from werkzeug.security import generate_password_hash, check_password_hash
 
+########################################
 #config starts 
+########################################
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
 
@@ -19,20 +21,35 @@ db_config = {
     "charset": "utf8mb4",
     "cursorclass": pymysql.cursors.DictCursor
 }
-#config ends 
 
-
-@app.route('/')
-def home():
-    """A simple home route."""
-    return jsonify(simple="Welcome")
-
-
-# Secret keys for JWT
 JWT_SECRET = "your_jwt_secret_key"
 JWT_REFRESH_SECRET = "your_refresh_secret_key"
 JWT_ALGORITHM = "HS256"
 
+def token_required(f):
+    def wrapper(*args, **kwargs):
+        token = request.headers.get("Authorization")
+        if not token:
+            return jsonify({"error": "Token is missing"}), 401
+
+        try:
+            decoded = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            g.user = decoded
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Token expired"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "Invalid token"}), 401
+
+        return f(*args, **kwargs)
+    return wrapper
+########################################
+#config ends 
+########################################
+
+
+########################################
+#login related routes starts 
+########################################
 @app.route('/login/', methods=['POST', 'OPTIONS'])
 def login():
     if request.method == 'OPTIONS':
@@ -51,20 +68,20 @@ def login():
         if not username or not password:
             return jsonify({"error": "Username and password are required"}), 400
 
-        # Connect to the database and validate credentials
         db = pymysql.connect(**db_config)
         with db.cursor() as cursor:
             query = "SELECT * FROM Users WHERE Username = %s AND Password = %s"
             cursor.execute(query, (username, password))
             user = cursor.fetchone()
 
+        # if user and check_password_hash(user["Password"], password):
         if user:
-            # Generate JWT tokens
+            # generating jwt-token 
             access_token = jwt.encode(
                 {
-                    "user_id": int(user["User_ID"]),  # Replace with your user ID column
+                    "user_id": int(user["User_ID"]), 
                     "username": user["Username"],
-                    "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=15),  # 15-minute expiration 
+                    "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=15),  
                 },
                 JWT_SECRET,
                 algorithm=JWT_ALGORITHM
@@ -74,13 +91,12 @@ def login():
                 {
                     "user_id": int(user["User_ID"]),
                     "username": user["Username"],
-                    "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7),  # 7-day expiration
+                    "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7),
                 },
                 JWT_REFRESH_SECRET,
                 algorithm=JWT_ALGORITHM
             )
 
-            # Return tokens in the response
             return jsonify({
                 "access": access_token,
                 "refresh": refresh_token,
@@ -98,23 +114,6 @@ def login():
     finally:
         if 'db' in locals():
             db.close()
-
-def token_required(f):
-    def wrapper(*args, **kwargs):
-        token = request.headers.get("Authorization")
-        if not token:
-            return jsonify({"error": "Token is missing"}), 401
-
-        try:
-            decoded = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-            g.user = decoded
-        except jwt.ExpiredSignatureError:
-            return jsonify({"error": "Token expired"}), 401
-        except jwt.InvalidTokenError:
-            return jsonify({"error": "Invalid token"}), 401
-
-        return f(*args, **kwargs)
-    return wrapper
 
 @app.route('/refresh/', methods=['POST'])
 def refresh():
@@ -143,7 +142,52 @@ def refresh():
     except jwt.InvalidTokenError:
         return jsonify({"error": "Invalid refresh token"}), 401
 
+@app.route('/signin/', methods=['POST'])
+def signin():
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        email = data.get("email")
+        password = data.get('password')
 
+        if not username or not password or not email:
+            return jsonify({"error": "Username and password are required"}), 400
+
+        hashed_password = generate_password_hash(password, method="pbkdf2")
+        db = pymysql.connect(**db_config)
+        with db.cursor() as cursor:
+            #checking if user already exists
+            query = "SELECT * FROM Users WHERE Username = %s OR email = %s"
+            print(len(hashed_password))
+            
+            cursor.execute(query, (username, email))
+            existing_user = cursor.fetchone()
+            if existing_user:
+                return jsonify({"error": "Username already exists"}), 400
+
+            #if new, insert into the database
+            insert_query = "INSERT INTO Users (User_ID, Username, Email, Password) VALUES (12, %s, %s, %s)"
+            cursor.execute(insert_query, (username, email, password))
+            db.commit()
+
+        return jsonify({"message": "User created successfully"}), 201
+
+    except pymysql.MySQLError as e:
+        print("Database error:", e)
+        return jsonify({"error": "Database connection error"}), 500
+    except Exception as e:
+        print("Server error:", e)
+        return jsonify({"error": "An error occurred"}), 500
+    finally:
+        if 'db' in locals():
+            db.close()
+
+
+
+@app.route("/", methods=['GET'])
+@token_required
+def home():
+    return jsonify(simple=12)
 
 if __name__ == "__main__":
     app.run(debug=True)
