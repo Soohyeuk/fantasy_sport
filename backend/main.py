@@ -5,6 +5,7 @@ import jwt
 import datetime
 from flask import g
 from werkzeug.security import generate_password_hash, check_password_hash
+import ignore
 
 ########################################
 #config starts 
@@ -22,8 +23,8 @@ db_config = {
     "cursorclass": pymysql.cursors.DictCursor
 }
 
-JWT_SECRET = "your_jwt_secret_key"
-JWT_REFRESH_SECRET = "your_refresh_secret_key"
+JWT_SECRET = ignore.JWT_SECRET_KEY
+JWT_REFRESH_SECRET = ignore.JWT_REFRESH_SECRET_KEY
 JWT_ALGORITHM = "HS256"
 
 def token_required(f):
