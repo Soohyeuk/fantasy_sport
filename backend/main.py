@@ -166,7 +166,7 @@ def signin():
                 return jsonify({"error": "Username already exists"}), 400
 
             #if new, insert into the database
-            insert_query = "INSERT INTO Users (User_ID, Username, Email, Password) VALUES (12, %s, %s, %s)"
+            insert_query = "INSERT INTO Users (Username, Email, Password) VALUES (%s, %s, %s)"
             cursor.execute(insert_query, (username, email, password))
             db.commit()
 
