@@ -1,39 +1,59 @@
-import {Link, useNavigate} from 'react-router-dom'
-import './Header.css'
-import {useRecoilValue, useSetRecoilState} from "recoil"
+import { Link, useNavigate } from 'react-router-dom';
+import './Header.css';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { AuthAtom, AuthUser, isLoginSelector } from '../../recoil/AuthAtom';
+import { useState } from 'react';
 
 const Header = () => {
   const navigate = useNavigate();
   const setToken = useSetRecoilState(AuthAtom); 
   const setAuthUser = useSetRecoilState(AuthUser); 
+  
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
   const toLogOut = () => {
     setToken(undefined);
     setAuthUser(undefined);
     localStorage.removeItem('tokens');
     navigate('/');
-  }
+  };
+
   const isLogin = useRecoilValue(isLoginSelector);
+
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
 
   return (
     <header className='header'>
-        <div className='header-image'>
-            <img className='hover' src="https://placehold.co/50x50" alt="" onClick={() => {navigate('/')}}/>
-            <p>Title</p>
+      <div className='header-image'>
+        <img className='hover' src="https://placehold.co/50x50" alt="" onClick={() => navigate('/')} />
+        <div className='dropdown'>
+          <p className='dropdown-title hover' onClick={toggleDropdown}>Sports</p>
+          {isDropdownOpen && (
+            <ul className='dropdown-menu'>
+              <li onClick={() => navigate('/sports/soccer')}>Soccer</li>
+              <li onClick={() => navigate('/sports/basketball')}>Basketball</li>
+              <li onClick={() => navigate('/sports/baseball')}>Baseball</li>
+              <li onClick={() => navigate('/sports/tennis')}>Tennis</li>
+            </ul>
+          )}
         </div>
-        <nav className='header-links'>
-            <Link className='links hover' to={'/'}>Some link 1</Link>
-            <Link className='links hover' to={'/about'}>Some link 2</Link>
-            <Link className='links hover' to={'/faq'}>Some link 3</Link>
-            <Link className='links hover' to={'/PAW'}>Some link 4</Link>
-        </nav>
-        <div className='header-user'>
-            {isLogin? <img className='right-icon' onClick={toLogOut} src="src/img/icons/user_icon.svg" alt="" /> :<button className='right-icon logIn hover' onClick={() => {navigate('/login');}}>Login</button>}
-            <img className='right-icon hover' src="src/img/icons/dark_theme_icon.svg" alt="" />
-            <img className='right-icon hover' src="src/img/icons/setting_icon.svg" alt="" />
-        </div>
+      </div>
+      <nav className='header-links'>
+        <Link className='links hover' to={'/league'}>Leagues</Link>
+        <Link className='links hover' to={'/about'}>Players</Link>
+        <Link className='links hover' to={'/faq'}>FAQ</Link>
+      </nav>
+      <div className='header-user'>
+        {isLogin ? (
+          <button className='right-icon logIn hover' onClick={toLogOut}>Logout</button>
+        ) : (
+          <button className='right-icon logIn hover' onClick={() => navigate('/login')}>Login</button>
+        )}
+      </div>
     </header>
-  )
-}
+  );
+};
 
-export default Header
+export default Header;

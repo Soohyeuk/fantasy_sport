@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, redirect, url_for, session
 from flask_cors import CORS
 import pymysql
 import jwt
@@ -6,6 +6,7 @@ import datetime
 from flask import g
 from werkzeug.security import generate_password_hash, check_password_hash
 import ignore
+from functools import wraps
 
 ########################################
 #config starts 
@@ -18,7 +19,7 @@ db_config = {
     "port": 3306,
     "user": "root",
     "password": "",
-    "database": "fantasysport",
+    "database": "fsport",
     "charset": "utf8mb4",
     "cursorclass": pymysql.cursors.DictCursor
 }
@@ -43,6 +44,30 @@ def token_required(f):
 
         return f(*args, **kwargs)
     return wrapper
+
+def requires_role(role):
+    def wrapper(func):
+        @wraps(func)
+        def decorated_function(*args, **kwargs):
+            token = request.headers.get("Authorization")
+            if not token:
+                return jsonify({"error": "Token is missing"}), 401
+
+            try:
+                decoded = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+                g.user = decoded
+                # Check if the user has the correct role
+                if g.user['role'] != role:
+                    return jsonify({"error": "You do not have the required permissions"}), 403
+            except jwt.ExpiredSignatureError:
+                return jsonify({"error": "Token expired"}), 401
+            except jwt.InvalidTokenError:
+                return jsonify({"error": "Invalid token"}), 401
+
+            return func(*args, **kwargs)
+        return decorated_function
+    return wrapper
+
 ########################################
 #config ends 
 ########################################
@@ -80,8 +105,9 @@ def login():
             # generating jwt-token 
             access_token = jwt.encode(
                 {
-                    "user_id": int(user["User_ID"]), 
+                    "user_id": user["User_ID"], 
                     "username": user["Username"],
+                    "role": user["Role"],
                     "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=15),  
                 },
                 JWT_SECRET,
@@ -90,8 +116,9 @@ def login():
 
             refresh_token = jwt.encode(
                 {
-                    "user_id": int(user["User_ID"]),
+                    "user_id": user["User_ID"],
                     "username": user["Username"],
+                    "role": user["Role"],
                     "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7),
                 },
                 JWT_REFRESH_SECRET,
@@ -187,6 +214,7 @@ def signin():
 
 @app.route("/", methods=['GET'])
 @token_required
+# @requires_role('admin')
 def home():
     return jsonify(simple=12)
 
