@@ -157,6 +157,7 @@ def refresh():
             {
                 "user_id": decoded["user_id"],
                 "username": decoded["username"],
+                "role": decoded["role"],
                 "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=15),
             },
             JWT_SECRET,
@@ -212,11 +213,11 @@ def signin():
 
 
 
-@app.route("/", methods=['GET'])
-@token_required
+# @app.route("/", methods=['GET'])
+# @token_required
 # @requires_role('admin')
-def home():
-    return jsonify(simple=12)
+# def home():
+#     return jsonify(simple=12)
 
 if __name__ == "__main__":
     app.run(debug=True)
