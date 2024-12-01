@@ -14,6 +14,7 @@ import CreateLeauge from './components/Leagues/CreateLeauge'
 import Teams from './components/Teams/Teams'
 import CreateTeam from './components/Teams/CreateTeam'
 import Matches from './components/Matches/Matches'
+import ProfileSetting from './components/ProfileSetting/ProfileSetting'
 
 function App() {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ function App() {
     const { exp } = jwtDecode(token);
     const currentTime = Math.floor(Date.now() / 1000);
     
-    return exp < currentTime - buffer;
+    return exp < currentTime + buffer;
   };
 
   const getNewAccessToken = async () => {
@@ -37,13 +38,7 @@ function App() {
     try {
       const res = await axios.post(
         'http://127.0.0.1:5000/refresh/',
-        { refresh: token?.refresh },
-        {
-          headers: {
-            Authorization: `Bearer ${token?.access}`,
-          },
-          withCredentials: true, // Ensures cookies are sent
-        }
+        { refresh: token?.refresh }
       );
       setToken(res.data); 
       setAuthUser(jwtDecode(res.data.access));  
@@ -93,23 +88,18 @@ function App() {
   }, [selectedSport]); 
 
   useEffect(() => {
-    if (loading && token?.access) {
-      if (isTokenExpired(token.access)) {
-        getNewAccessToken();
-      } else {
-        setAuthUser(jwtDecode(token.access));
-        setLoading(false);
-      }
+    if (loading) {
+      getNewAccessToken();  
     }
   
     const interval = setInterval(() => {
-        if (token?.access && isTokenExpired(token.access)) {
-          getNewAccessToken();
-        }
-      }, 1000 * 3 * 60);
-
+      if (token) {
+        getNewAccessToken();
+      }
+    }, 1000 * 2 * 60)
+  
     return () => clearInterval(interval);
-  }, [token, loading]); 
+  }, [token, loading]);
    
   const location = useLocation();
   const [sport, setSport] = useRecoilState(selectedSportAtom);
@@ -144,7 +134,7 @@ function App() {
             <Route path="/teams" exact element={<Teams/>} />
             <Route path="/teams/create-team" exact element={<CreateTeam/>} />
 
-
+            <Route path="/profile-setting" exact element={<ProfileSetting/>} />
         </Routes>
     </>
   )

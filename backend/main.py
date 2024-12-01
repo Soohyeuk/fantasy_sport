@@ -65,9 +65,15 @@ def requires_role(*roles):
         @wraps(func)
         def decorated_function(*args, **kwargs):
             if request.method == "OPTIONS":
-                return jsonify({"message": "Preflight request successful"}), 200
+                response = jsonify({"message": "Preflight request successful"})
+                response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
+                response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization")
+                response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
+                response.headers.add("Access-Control-Allow-Credentials", "true")
+                return response, 200
 
             token = request.headers.get("Authorization")
+            print(token)
             if not token:
                 return jsonify({"error": "Authorization token is missing"}), 401
 
@@ -172,7 +178,6 @@ def login():
             db.close()
 
 @app.route('/refresh/', methods=['POST', 'OPTIONS'])
-@token_required
 def refresh():
     if request.method == 'OPTIONS':
         response = jsonify({"message": "Preflight request successful"})
@@ -311,7 +316,6 @@ def get_leagues():
 
 
 @app.route("/post_leagues/", methods=['POST', 'OPTIONS'], endpoint="post_leagues_endpoint")
-@token_required
 @requires_role("admin", "user")
 def post_leagues():
     if request.method == 'OPTIONS':
@@ -418,7 +422,6 @@ def get_teams():
         return jsonify({"error": str(e)}), 400
 
 @app.route("/post_teams/", methods=['POST', 'OPTIONS'], endpoint="post_teams_endpoint")
-@token_required
 @requires_role("admin", "user")
 def post_teams():
     if request.method == 'OPTIONS':
@@ -528,6 +531,58 @@ def get_league_matches(league_id):
         return jsonify(response), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+########################################
+#match related ends
+########################################
+
+
+########################################
+#profile setting related starts
+########################################
+@app.route('/update-profile', methods=['POST', 'OPTIONS'])
+@requires_role("admin", "user")
+def update_profile():
+    if request.method == 'OPTIONS':
+        response = jsonify({"message": "Preflight request successful"})
+        response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization") 
+        response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        return response, 200
+    
+    data = request.json
+
+    user_id = data.get("user_id")
+    username = data.get("username")
+    password = data.get("password")
+    email = data.get("email")
+    first_name = data.get("first_name")
+    last_name = data.get("last_name")
+
+    if not user_id:
+        return jsonify({"error": "User ID is required"}), 400
+
+    try:
+        # Connect to database
+        connection = pymysql.connect(**db_config)
+        cursor = connection.cursor()
+
+        # Update the user data in the database
+        sql = """
+            UPDATE users 
+            SET Username = %s, Password = %s, Email = %s, 
+                FullName = CONCAT(%s, ' ', %s)
+            WHERE User_ID = %s
+        """
+        cursor.execute(sql, (username, password, email, first_name, last_name, user_id))
+        connection.commit()
+
+        return jsonify({"message": "Profile updated successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        connection.close()
 
 
 
