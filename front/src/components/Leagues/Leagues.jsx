@@ -68,10 +68,11 @@ const Leagues = () => {
         fetchLeagues(page);
         }
     };
+
     const handleCreateLeauges = () => {
         navigate(`/leagues/create-league?sport=${sport}`);
     }
-
+    
     const handleViewTeams = (leagueId, leagueName, leagueType) => {
         const urlParams = new URLSearchParams(window.location.search);
         const sport = urlParams.get('sport');

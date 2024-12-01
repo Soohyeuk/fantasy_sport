@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import './Teams.css'
 import axios from 'axios';
-import { useRecoilValue } from 'recoil';
-import { selectedSportAtom, changedSportSelector } from '../../recoil/Sport';
-import {isLoginSelector} from '../../recoil/AuthAtom';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const Teams = () => {
@@ -79,11 +76,21 @@ const Teams = () => {
         });
     }
 
+    const handleViewMatches = () => {
+        navigate(`/matches/?leagueId=${leagueId}`, {
+            state: { leagueName, leagueId },
+        })
+    }
+
 
   return (
     <div className="biggest">
         <h1 className='team-title'>Teams for {leagueName}</h1>
         <div className='team-upper'>
+            {sport === "Sports" ?
+                (<p></p>) 
+                : (<button className='view-teams create-teams' onClick={handleViewMatches}>Matches</button>)
+            }
             {sport === "Sports" ? (
                 <p></p>
             ) : (

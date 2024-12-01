@@ -1,0 +1,87 @@
+@import url('/src/global.css');
+
+/* Styles for the Matches component */
+
+/* Container for the Matches section */
+.matches-container {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+  
+  /* Header for the Matches */
+  .matches-container h1 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 20px;
+  }
+  
+  /* Table styling */
+  .matches-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  
+  .matches-table th,
+  .matches-table td {
+    padding: 10px;
+    text-align: left;
+    border: 1px solid #ddd;
+  }
+  
+  .matches-table th {
+    background-color: #f4f4f4;
+  }
+  
+  .matches-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  
+  /* Match info styling */
+  .matches-table td {
+    font-size: 1rem;
+  }
+  
+  .matches-table .team-name {
+    font-weight: bold;
+    color: #2c3e50;
+  }
+  
+  .matches-table .winner {
+    font-weight: bold;
+    color: #27ae60;
+  }
+  
+  /* Pagination Controls */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  
+  .pagination button {
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 0 5px;
+    transition: background-color 0.3s;
+  }
+  
+  .pagination button:hover {
+    background-color: #2980b9;
+  }
+  
+  .pagination button:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+  }
+  
+  .pagination span {
+    padding: 10px;
+    font-size: 1rem;
+    align-self: center;
+  }
+  

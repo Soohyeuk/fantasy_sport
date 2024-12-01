@@ -51,8 +51,10 @@ def token_required(f):
             decoded = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
             g.user = decoded
         except jwt.ExpiredSignatureError:
+            print("d")
             return jsonify({"error": "Token expired"}), 401
         except jwt.InvalidTokenError:
+            print("e")
             return jsonify({"error": "Invalid token"}), 401
 
         return f(*args, **kwargs)
@@ -96,6 +98,7 @@ def requires_role(*roles):
 ########################################
 #config ends 
 ########################################
+
 
 
 ########################################
@@ -182,13 +185,13 @@ def refresh():
     try:
         data = request.get_json()
         refresh_token = data.get("refresh")
-
         if not refresh_token:
             return jsonify({"error": "Refresh token required"}), 400
 
         decoded = jwt.decode(refresh_token, JWT_REFRESH_SECRET, algorithms=[JWT_ALGORITHM], options={"verify_exp": False})
 
         if datetime.utcfromtimestamp(decoded['exp']) < datetime.utcnow():
+            print("a")
             return jsonify({"error": "Refresh token expired"}), 401
         new_access_token = jwt.encode(
             {
@@ -204,8 +207,10 @@ def refresh():
         return jsonify({"access": new_access_token}), 200
 
     except jwt.ExpiredSignatureError:
+        print("b")
         return jsonify({"error": "Refresh token expired"}), 401
     except jwt.InvalidTokenError:
+        print("c")
         return jsonify({"error": "Invalid refresh token"}), 401
 
 
@@ -251,6 +256,7 @@ def signin():
 ########################################
 #login related routes ends  
 ########################################
+
 
 
 ########################################
@@ -361,6 +367,7 @@ def post_leagues():
 ########################################
         
 
+
 ########################################
 #team related starts
 ########################################
@@ -449,6 +456,79 @@ def post_teams():
     finally:
         cursor.close()
         connection.close()
+########################################
+#team related ends
+########################################
+        
+
+
+########################################
+#match related starts
+########################################
+@app.route('/league/<int:league_id>/matches', methods=['GET'])
+@requires_role("admin", "user")
+def get_league_matches(league_id):
+    try:
+        page = request.args.get('page', 1, type=int)  
+        per_page = request.args.get('per_page', 10, type=int) 
+        offset = (page - 1) * per_page 
+
+        db = pymysql.connect(**db_config)
+        cursor = db.cursor(pymysql.cursors.DictCursor)
+
+        query_teams = "SELECT Team_ID FROM teams WHERE League_ID = %s"
+        cursor.execute(query_teams, (league_id,))
+        teams = cursor.fetchall()
+        team_ids = [team['Team_ID'] for team in teams]
+
+        if not team_ids:
+            return jsonify({"error": "No teams found in the league"}), 404
+        
+        placeholders = ','.join(['%s'] * len(team_ids))
+        query_matches = f"""
+            SELECT 
+                m.Match_ID, 
+                m.Team1_ID, 
+                m.Team2_ID, 
+                t1.TeamName AS Team1_Name,
+                t2.TeamName AS Team2_Name,
+                m.MatchDate, 
+                m.FinalScore, 
+                m.Winner
+            FROM matches m
+            JOIN Teams t1 ON m.Team1_ID = t1.Team_ID
+            JOIN Teams t2 ON m.Team2_ID = t2.Team_ID
+            WHERE m.Team1_ID IN ({placeholders}) OR m.Team2_ID IN ({placeholders})
+            LIMIT %s OFFSET %s
+        """
+        params = team_ids + team_ids + [per_page, offset]
+        cursor.execute(query_matches, params)
+        matches = cursor.fetchall()
+
+        count_query = f"""
+            SELECT COUNT(*) as total FROM matches 
+            WHERE Team1_ID IN ({placeholders}) OR Team2_ID IN ({placeholders})
+        """
+        cursor.execute(count_query, team_ids + team_ids)
+        total_matches = cursor.fetchone()['total']
+
+        cursor.close()
+        db.close()
+
+        total_pages = (total_matches + per_page - 1) // per_page
+
+        response = {
+            'matches': matches,
+            'total': total_matches,
+            'pages': total_pages,
+            'current_page': page,
+            'per_page': per_page
+        }
+
+        return jsonify(response), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
 
 
 @app.route("/", methods=['GET'], endpoint="home_endpoint")

@@ -13,6 +13,7 @@ import Leagues from './components/Leagues/Leagues'
 import CreateLeauge from './components/Leagues/CreateLeauge'
 import Teams from './components/Teams/Teams'
 import CreateTeam from './components/Teams/CreateTeam'
+import Matches from './components/Matches/Matches'
 
 function App() {
   const navigate = useNavigate();
@@ -33,11 +34,17 @@ function App() {
   const getNewAccessToken = async () => {
     if (refreshing) return;
     setRefreshing(true);
-  
     try {
-      const res = await axios.post('http://127.0.0.1:5000/refresh/', {
-        refresh: token?.refresh,
-      });
+      const res = await axios.post(
+        'http://127.0.0.1:5000/refresh/',
+        { refresh: token?.refresh },
+        {
+          headers: {
+            Authorization: `Bearer ${token?.access}`,
+          },
+          withCredentials: true, // Ensures cookies are sent
+        }
+      );
       setToken(res.data); 
       setAuthUser(jwtDecode(res.data.access));  
       localStorage.setItem('tokens', JSON.stringify(res.data));  
@@ -100,7 +107,7 @@ function App() {
           getNewAccessToken();
         }
       }, 1000 * 3 * 60);
-  
+
     return () => clearInterval(interval);
   }, [token, loading]); 
    
@@ -131,9 +138,13 @@ function App() {
 
             <Route path="/leagues" exact element={<Leagues/>} />
             <Route path="/leagues/create-league" exact element={<CreateLeauge/>} />
+            <Route path="/matches" element={<Matches />} />
+
 
             <Route path="/teams" exact element={<Teams/>} />
             <Route path="/teams/create-team" exact element={<CreateTeam/>} />
+
+
         </Routes>
     </>
   )
