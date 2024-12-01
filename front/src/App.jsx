@@ -23,18 +23,10 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  //login related
-  const isTokenExpired = (token) => {
-    const buffer = 30;
-    const { exp } = jwtDecode(token);
-    const currentTime = Math.floor(Date.now() / 1000);
-    
-    return exp < currentTime + buffer;
-  };
-
   const getNewAccessToken = async () => {
     if (refreshing) return;
     setRefreshing(true);
+    console.log(token)
     try {
       const res = await axios.post(
         'http://127.0.0.1:5000/refresh/',

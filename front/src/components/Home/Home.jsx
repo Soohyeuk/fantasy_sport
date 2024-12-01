@@ -10,25 +10,25 @@ const Home = () => {
   const sport = useRecoilValue(selectedSportAtom);
 
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const { access: token } = JSON.parse(localStorage.getItem('tokens')) || {};
-        if (token) {
-          const response = await axios.get('http://127.0.0.1:5000/', {
-            headers: {
-              Authorization: `${token}`,
-            },
-          });
-          setResult(response.data);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       const { access: token } = JSON.parse(localStorage.getItem('tokens')) || {};
+  //       if (token) {
+  //         const response = await axios.get('http://127.0.0.1:5000/', {
+  //           headers: {
+  //             Authorization: `${token}`,
+  //           },
+  //         });
+  //         setResult(response.data);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching data:', error);
+  //     }
+  //   };
 
-    fetchData();
-  }, []);
+  //   fetchData();
+  // }, []);
 
   return (
     <div>
@@ -39,9 +39,6 @@ const Home = () => {
             <p>Join and play fantasy sports with different people!</p>
           </div>
         </div>
-      </div>
-      <div>
-        {result ? <p>Simple: {result.simple}</p> : <p>Loading...</p>}
       </div>
     </div>
   );

@@ -190,7 +190,9 @@ def refresh():
     try:
         data = request.get_json()
         refresh_token = data.get("refresh")
+        print(refresh_token)
         if not refresh_token:
+            print("ddd")
             return jsonify({"error": "Refresh token required"}), 400
 
         decoded = jwt.decode(refresh_token, JWT_REFRESH_SECRET, algorithms=[JWT_ALGORITHM], options={"verify_exp": False})
@@ -209,7 +211,18 @@ def refresh():
             algorithm=JWT_ALGORITHM
         )
 
-        return jsonify({"access": new_access_token}), 200
+        new_refresh_token = jwt.encode(
+            {
+                "user_id": decoded["user_id"],
+                "username": decoded["username"],
+                "role": decoded["role"],
+                "exp": datetime.utcnow() + timedelta(days=7),
+            },
+            JWT_REFRESH_SECRET,
+            algorithm=JWT_ALGORITHM
+        )
+
+        return jsonify({"access": new_access_token, "refresh": new_refresh_token}), 200
 
     except jwt.ExpiredSignatureError:
         print("b")
@@ -583,7 +596,9 @@ def update_profile():
     finally:
         cursor.close()
         connection.close()
-
+########################################
+#profile setting related ends
+########################################
 
 
 @app.route("/", methods=['GET'], endpoint="home_endpoint")
