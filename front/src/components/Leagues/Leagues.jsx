@@ -11,7 +11,6 @@ const Leagues = () => {
     const [leagues, setLeagues] = useState([]); 
     const sport = useRecoilValue(selectedSportAtom);
     const initializedSports = useRecoilValue(changedSportSelector);
-    const isLoggedIn = useRecoilValue(isLoginSelector);
     const [pagination, setPagination] = useState({
         total: 0,
         pages: 0,
@@ -24,7 +23,8 @@ const Leagues = () => {
         const tokens = JSON.parse(localStorage.getItem('tokens'));
         if (!tokens || !tokens.access) {
             console.error('Access token is missing');
-            navigate('/login');
+            navigate('/login', { replace: true });
+            return;
         }
         const accessToken = tokens.access;
         
@@ -40,7 +40,7 @@ const Leagues = () => {
         });
         const data = response.data;
         if (data.error === "Authorization token is missing") {
-            navigate('/login');
+            navigate('/login', { replace: true });
         }
         if (Array.isArray(data.leagues)) {
             setLeagues(data.leagues); 
@@ -72,6 +72,14 @@ const Leagues = () => {
         navigate(`/leagues/create-league?sport=${sport}`);
     }
 
+    const handleViewTeams = (leagueId, leagueName, leagueType) => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sport = urlParams.get('sport');
+        navigate(`/teams?leagueId=${leagueId}&sport=${sport}`, {
+            state: { leagueName, leagueType }, 
+        });
+    };
+
   return (
     <div className="biggest">
         <h1 className='league-title'>Leagues for {sport}</h1>
@@ -94,7 +102,7 @@ const Leagues = () => {
                     {new Date(league.DraftDate).toLocaleDateString()}
                     </p>
                 </div>
-                <button className="view-teams">View Teams</button>
+                <button className="view-teams" onClick={() => handleViewTeams(league.League_ID, league.LeagueName, league.LeagueType)}>View Teams</button>
                 </div>
             ))
             ) : (
@@ -123,10 +131,4 @@ const Leagues = () => {
 };
 
 export default Leagues;
-
-
-// i am using flask and reactjs to make a fantasy sport management website. 
-// 1. it has multiple sports
-// 2. it has multiple leagues for each sports 
-// 3. it has multiple teams for each leagues 
 

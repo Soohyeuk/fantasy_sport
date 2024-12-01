@@ -23,13 +23,18 @@ const Header = () => {
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
+  
   const selectSport = (sport) => {
     setSelectedSport(sport);
-
     const searchParams = new URLSearchParams(location.search);
-    searchParams.set('sport', sport.toLowerCase()); 
-    navigate(`${location.pathname}?${searchParams.toString()}`);
-    setIsDropdownOpen(false); 
+    searchParams.set('sport', sport.toLowerCase());
+    setIsDropdownOpen(false);
+
+    if (location.pathname === '/') {
+      navigate(`${location.pathname}?${searchParams.toString()}`);
+    } else {
+      navigate(`/leagues?${searchParams.toString()}`);
+    }
   };
 
   return (

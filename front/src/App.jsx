@@ -11,6 +11,8 @@ import { AuthAtom, AuthUser } from './recoil/AuthAtom'
 import { selectedSportAtom } from './recoil/Sport'
 import Leagues from './components/Leagues/Leagues'
 import CreateLeauge from './components/Leagues/CreateLeauge'
+import Teams from './components/Teams/Teams'
+import CreateTeam from './components/Teams/CreateTeam'
 
 function App() {
   const navigate = useNavigate();
@@ -46,7 +48,7 @@ function App() {
       setToken(undefined);  
       setAuthUser(undefined); 
       localStorage.removeItem('tokens');  
-      navigate('/login'); 
+      navigate('/login', { replace: true }); 
 
     } finally {
       setRefreshing(false);
@@ -78,6 +80,7 @@ function App() {
   };
 
   const selectedSport = useRecoilValue(selectedSportAtom);  
+  
   useEffect(() => {
     updateCSSVariables(selectedSport);  
   }, [selectedSport]); 
@@ -117,7 +120,7 @@ function App() {
   }, [location.search, setSport]);
 
 
-  const shouldShowHeader = !['/login', '/signin', '/leagues/create-league'].includes(location.pathname);
+  const shouldShowHeader = !['/login', '/signin', '/leagues/create-league', '/teams/create-team'].includes(location.pathname);
   return (
     <>
       {shouldShowHeader && <Header />}
@@ -128,6 +131,9 @@ function App() {
 
             <Route path="/leagues" exact element={<Leagues/>} />
             <Route path="/leagues/create-league" exact element={<CreateLeauge/>} />
+
+            <Route path="/teams" exact element={<Teams/>} />
+            <Route path="/teams/create-team" exact element={<CreateTeam/>} />
         </Routes>
     </>
   )

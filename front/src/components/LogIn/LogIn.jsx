@@ -4,7 +4,7 @@ import './LogIn.css';
 import axios from "axios";
 import { AuthAtom, AuthUser } from '../../recoil/AuthAtom';
 import { useSetRecoilState } from "recoil";
-import {jwtDecode} from 'jwt-decode'; // Fix the import here
+import {jwtDecode} from 'jwt-decode'; 
 
 const LogIn = () => {
   const [formData, setFormData] = useState({

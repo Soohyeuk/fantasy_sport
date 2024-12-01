@@ -1,16 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect} from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './CreateLeague.css';
 import { useRecoilValue } from 'recoil';
 import {changedSportSelector } from '../../recoil/Sport';
 import {user_id} from '../../recoil/AuthAtom';
 import axios from 'axios';
+import { isLoginSelector } from '../../recoil/AuthAtom';
 
 const CreateLeague = () => {
     const location = useLocation();
     const searchParams = new URLSearchParams(location.search);
     const sport = searchParams.get('sport');
     const navigate = useNavigate();
+
+    const isLoggedIn = useRecoilValue(isLoginSelector);
+    useEffect(() => {
+        if (!isLoggedIn) {
+            navigate('/login', { replace: true }); 
+        }
+    }, [isLoggedIn, navigate]);
 
     const userID = useRecoilValue(user_id);
     const [leagueName, setLeagueName] = useState('');
@@ -29,7 +37,7 @@ const CreateLeague = () => {
             draftDate,
             initializedSports,
         };
- 
+        console.log(draftDate);
         axios.post('http://127.0.0.1:5000/post_leagues/', data, {
             headers: {
                 Authorization: `Bearer ${token}`, 
@@ -42,6 +50,10 @@ const CreateLeague = () => {
         })
         .catch((error) => {
             console.error('Error creating league:', error);
+            if (error.response && error.response.data && error.response.data.message && 
+                error.response.data.message.includes('Draft date must be at least one hour after the current UTC time')) {
+                alert('The draft date must be at least one hour in the future. Please select a valid date.');
+            }
         });
     };
 

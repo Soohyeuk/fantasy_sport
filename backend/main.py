@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, redirect, url_for, session
 from flask_cors import CORS, cross_origin
 import pymysql
 import jwt
-import datetime
+from datetime import datetime, timedelta
 from flask import g
 from werkzeug.security import generate_password_hash, check_password_hash
 import ignore
@@ -133,7 +133,7 @@ def login():
                     "user_id": user["User_ID"], 
                     "username": user["Username"],
                     "role": user["Role"],
-                    "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=15),  
+                    "exp": datetime.utcnow() + timedelta(minutes=15),  
                 },
                 JWT_SECRET,
                 algorithm=JWT_ALGORITHM
@@ -144,7 +144,7 @@ def login():
                     "user_id": user["User_ID"],
                     "username": user["Username"],
                     "role": user["Role"],
-                    "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7),
+                    "exp": datetime.utcnow() + timedelta(days=7),
                 },
                 JWT_REFRESH_SECRET,
                 algorithm=JWT_ALGORITHM
@@ -169,6 +169,7 @@ def login():
             db.close()
 
 @app.route('/refresh/', methods=['POST', 'OPTIONS'])
+@token_required
 def refresh():
     if request.method == 'OPTIONS':
         response = jsonify({"message": "Preflight request successful"})
@@ -177,6 +178,7 @@ def refresh():
         response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
         response.headers.add("Access-Control-Allow-Credentials", "true")
         return response, 200
+
     try:
         data = request.get_json()
         refresh_token = data.get("refresh")
@@ -184,13 +186,16 @@ def refresh():
         if not refresh_token:
             return jsonify({"error": "Refresh token required"}), 400
 
-        decoded = jwt.decode(refresh_token, JWT_REFRESH_SECRET, algorithms=[JWT_ALGORITHM])
+        decoded = jwt.decode(refresh_token, JWT_REFRESH_SECRET, algorithms=[JWT_ALGORITHM], options={"verify_exp": False})
+
+        if datetime.utcfromtimestamp(decoded['exp']) < datetime.utcnow():
+            return jsonify({"error": "Refresh token expired"}), 401
         new_access_token = jwt.encode(
             {
                 "user_id": decoded["user_id"],
                 "username": decoded["username"],
                 "role": decoded["role"],
-                "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=15),
+                "exp": datetime.utcnow() + timedelta(minutes=15),
             },
             JWT_SECRET,
             algorithm=JWT_ALGORITHM
@@ -202,6 +207,7 @@ def refresh():
         return jsonify({"error": "Refresh token expired"}), 401
     except jwt.InvalidTokenError:
         return jsonify({"error": "Invalid refresh token"}), 401
+
 
 @app.route('/signin/', methods=['POST'])
 def signin():
@@ -270,12 +276,11 @@ def get_leagues():
         params.extend([per_page, offset])
         
         db = pymysql.connect(**db_config)
-        cursor = db.cursor()  # No 'dictionary' argument here; instead use DictCursor
-        cursor = db.cursor(pymysql.cursors.DictCursor)  # Use DictCursor for dict-like rows
+        cursor = db.cursor()  
+        cursor = db.cursor(pymysql.cursors.DictCursor)
         cursor.execute(query, tuple(params))
         leagues = cursor.fetchall()
 
-        # Get total count of leagues for pagination
         count_query = "SELECT COUNT(*) FROM leagues"
         if sport:
             count_query += " WHERE sport = %s"
@@ -285,10 +290,7 @@ def get_leagues():
         cursor.close()
         db.close()
 
-        # Calculate total pages
-        total_pages = (total_leagues + per_page - 1) // per_page  # Ceiling division
-
-        # Prepare the response
+        total_pages = (total_leagues + per_page - 1) // per_page 
         response = {
             'leagues': leagues,
             'total': total_leagues,
@@ -323,9 +325,18 @@ def post_leagues():
     sport = data.get('initializedSports')
 
     if not league_name or not league_type or not commissioner or not max_teams or not draft_date or not sport:
-        print(sport)
         return jsonify({'message': 'Missing required fields'}), 400
     
+    try:
+        draft_date_parsed = datetime.strptime(draft_date, "%Y-%m-%dT%H:%M") 
+        if draft_date_parsed <= datetime.utcnow() + timedelta(hours=1):
+            print("nah")
+            return jsonify({'message': 'Draft date must be at least one hour after the current UTC time'}), 400
+    except ValueError:
+        print("s")
+        return jsonify({'message': 'Invalid draft date format. Please provide ISO 8601 format (e.g., YYYY-MM-DDTHH:MM:SS).'}), 400
+
+
     connection = pymysql.connect(**db_config)
     cursor = connection.cursor()
 
@@ -345,7 +356,99 @@ def post_leagues():
     finally:
         cursor.close()
         connection.close()
+########################################
+#leagues related ends
+########################################
+        
 
+########################################
+#team related starts
+########################################
+@app.route('/get_teams', methods=['GET'])
+@requires_role("admin", "user")
+def get_teams():
+    try:
+        page = request.args.get('page', 1, type=int) 
+        per_page = request.args.get('per_page', 10, type=int)  
+        league_id = request.args.get('league_id') 
+        offset = (page - 1) * per_page
+        
+        query = "SELECT * FROM teams"
+        params = []
+
+        if league_id:
+            query += " WHERE league_id = %s"
+            params.append(league_id)
+
+        query += " LIMIT %s OFFSET %s"
+        params.extend([per_page, offset])
+        
+        db = pymysql.connect(**db_config)
+        cursor = db.cursor(pymysql.cursors.DictCursor)  
+        cursor.execute(query, tuple(params))
+        teams = cursor.fetchall()
+
+        count_query = "SELECT COUNT(*) FROM teams"
+        if league_id:
+            count_query += " WHERE league_id = %s"
+        cursor.execute(count_query, tuple([league_id] if league_id else []))
+        total_teams = cursor.fetchone()['COUNT(*)']
+        
+        cursor.close()
+        db.close()
+        total_pages = (total_teams + per_page - 1) // per_page  
+
+        response = {
+            'teams': teams,
+            'total': total_teams,
+            'pages': total_pages,
+            'current_page': page,
+            'per_page': per_page
+        }
+        
+        return jsonify(response), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route("/post_teams/", methods=['POST', 'OPTIONS'], endpoint="post_teams_endpoint")
+@token_required
+@requires_role("admin", "user")
+def post_teams():
+    if request.method == 'OPTIONS':
+        response = jsonify({"message": "Preflight request successful"})
+        response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization") 
+        response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        return response, 200
+
+    data = request.get_json()
+    team_name = data.get('teamName')
+    owner = data.get('owner')
+    league_id = data.get('leagueId')
+
+    if not team_name or not league_id or not owner:
+        return jsonify({'message': 'Missing required fields'}), 400
+
+    connection = pymysql.connect(**db_config)
+    cursor = connection.cursor()
+
+    try:
+        insert_query = """
+            INSERT INTO teams (TeamName, Owner, League_ID)
+            VALUES (%s, %s, %s)
+        """
+        cursor.execute(insert_query, (team_name, owner, league_id))
+        connection.commit()
+
+        return jsonify({'message': 'Team created successfully'}), 201
+    except Exception as e:
+        connection.rollback()
+        print(f"Error occurred: {e}")
+        return jsonify({'message': str(e)}), 500
+    finally:
+        cursor.close()
+        connection.close()
 
 
 @app.route("/", methods=['GET'], endpoint="home_endpoint")
