@@ -1,5 +1,6 @@
 @import url('/src/global.css');
 
+
 .home-hero-container {
     width: 100%;
     height: 1000px;
@@ -46,10 +47,6 @@
     align-items: center;
     background-color: var(--main-color);
     border-radius: 15px;
-}
-
-#all {
-    color: var(--first-gray);
 }
 
 .champ-container {

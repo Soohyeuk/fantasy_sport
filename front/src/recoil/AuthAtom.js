@@ -9,13 +9,13 @@ export const AuthUser = atom({
       if (tokens) {
         const parsedTokens = JSON.parse(tokens);
         if (parsedTokens.access) {
-          return jwtDecode(parsedTokens.access); // Decode the access token
+          return jwtDecode(parsedTokens.access);
         }
       }
     } catch (error) {
       console.error("Error decoding token:", error);
     }
-    return undefined; // Default value if decoding fails
+    return undefined; 
   })(),
 });
 
@@ -24,31 +24,31 @@ export const AuthAtom = atom({
   default: (() => {
     try {
       const tokens = localStorage.getItem('tokens');
-      return tokens ? JSON.parse(tokens) : undefined; // Parse and return tokens
+      return tokens ? JSON.parse(tokens) : undefined; 
     } catch (error) {
       console.error("Error parsing tokens from localStorage:", error);
-      return undefined; // Default value if parsing fails
+      return undefined; 
     }
   })(),
 });
 
 export const isLoginSelector = selector({
   key: 'isLoginSelector',
-  get: ({ get }) => !!get(AuthAtom), // True if AuthAtom has a value
+  get: ({ get }) => !!get(AuthAtom), 
 });
 
 export const user_id = selector({
   key: 'user_id',
   get: ({ get }) => {
     const authUser = get(AuthUser);
-    return authUser ? authUser.user_id : undefined; // Extract user_id from decoded token
+    return authUser ? authUser.user_id : undefined; 
   },
 });
 
 export const username = selector({
-  key: 'username',
+  key: 'usernames',
   get: ({ get }) => {
     const authUser = get(AuthUser);
-    return authUser ? authUser.username : undefined; // Extract username from decoded token
+    return authUser ? authUser.username : undefined; 
   },
 });

@@ -1,0 +1,115 @@
+@import url('/src/global.css');
+
+.create-league-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 50px;
+    padding: 20px;
+    background-color: #f7f7f7;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.create-league-container h1 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.create-league-container form {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.create-league-container label {
+    display: block;
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+.create-league-container input,
+.create-league-container select {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+.create-league-container input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.create-league-container #leagueName,
+.create-league-container #maxTeams,
+.create-league-container #draftDate {
+    margin: 5px 0 15px 0;
+}
+
+.create-league-container button {
+    padding: 10px 20px;
+    font-size: 16px;
+    color: white;
+    background-color: var(--main-color);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+    width: 48%;
+}
+
+.create-league-container button:hover {
+    opacity: 0.8;
+}
+
+.create-league-container button[type="button"] {
+    background-color: #f44336;
+}
+
+.create-league-container .form-actions {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 10px;
+}
+
+.create-league-container select {
+    padding: 8px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+.create-league-container input[type="datetime-local"] {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+.create-league-container .form-actions {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 10px;
+}
+
+.create-league-container input[type="number"]::-webkit-outer-spin-button,
+.create-league-container input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}

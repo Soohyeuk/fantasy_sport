@@ -30,30 +30,20 @@ const LogIn = () => {
         headers: { 'Content-Type': 'application/json' }
       });
 
-      const { access, refresh } = response.data; // Destructure tokens from response
-      console.log("a");
-
-      // Decode access token to get user details
+      const { access, refresh } = response.data; 
       const decodedAccess = jwtDecode(access);
-
-      // Set tokens and user state
       setToken({ access, refresh });
       setAuthUser(decodedAccess);
-
-      // Store tokens in localStorage
       localStorage.setItem('tokens', JSON.stringify({ access, refresh }));
-
-      // Navigate to the previous page or default
       navigate(from);
-
-      // Reset error states
+      window.location.reload();
       setResponseError(false);
       setRequestError(false);
     } catch (error) {
       if (error.response) {
-        setResponseError(true); // Invalid credentials
+        setResponseError(true); 
       } else if (error.request) {
-        setRequestError(true); // Network/server error
+        setRequestError(true); 
       }
     }
   };

@@ -4,11 +4,13 @@ import { Routes, Route, useLocation, useNavigate} from 'react-router-dom'
 import SignIn from './components/SignIn/SignIn'
 import Home from './components/Home/Home'
 import Header from './components/Header/Header'
-
-import {useRecoilState, useSetRecoilState} from "recoil"
+import {useRecoilState, useSetRecoilState, useRecoilValue} from "recoil"
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { AuthAtom, AuthUser } from './recoil/AuthAtom'
+import { selectedSportAtom } from './recoil/Sport'
+import Leagues from './components/Leagues/Leagues'
+import CreateLeauge from './components/Leagues/CreateLeauge'
 
 function App() {
   const navigate = useNavigate();
@@ -17,11 +19,13 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  //login related
   const isTokenExpired = (token) => {
+    const buffer = 30;
     const { exp } = jwtDecode(token);
     const currentTime = Math.floor(Date.now() / 1000);
     
-    return exp < currentTime;
+    return exp < currentTime - buffer;
   };
 
   const getNewAccessToken = async () => {
@@ -49,7 +53,35 @@ function App() {
       if (loading) setLoading(false); 
     }
   };
-  
+  //log in related ends 
+
+
+  const updateCSSVariables = (sport) => {
+    const root = document.documentElement;
+    switch (sport) {
+      case 'Soccer':
+      root.style.setProperty('--main-color', '#B8860B');
+      break;
+    case 'Basketball':
+      root.style.setProperty('--main-color', '#ff5733'); 
+      root.style.setProperty('--first-gray', '#d1d1d1');
+      break;
+    case 'Baseball':
+      root.style.setProperty('--main-color', '#6A4C9C'); 
+      break;
+    case 'Football':
+      root.style.setProperty('--main-color', '#3e8e41'); 
+      break;
+    default:
+      break;
+    }
+  };
+
+  const selectedSport = useRecoilValue(selectedSportAtom);  
+  useEffect(() => {
+    updateCSSVariables(selectedSport);  
+  }, [selectedSport]); 
+
   useEffect(() => {
     if (loading && token?.access) {
       if (isTokenExpired(token.access)) {
@@ -61,17 +93,31 @@ function App() {
     }
   
     const interval = setInterval(() => {
-      if (token?.access && isTokenExpired(token.access)) {
-        getNewAccessToken();
-      }
-    }, 1000 * 4 * 60);
+        if (token?.access && isTokenExpired(token.access)) {
+          getNewAccessToken();
+        }
+      }, 1000 * 3 * 60);
   
     return () => clearInterval(interval);
-  }, [token, loading]);
-  
-  
+  }, [token, loading]); 
+   
   const location = useLocation();
-  const shouldShowHeader = !['/login', '/signin'].includes(location.pathname);
+  const [sport, setSport] = useRecoilState(selectedSportAtom);
+
+  useEffect(() => {
+    const extractSportFromURL = () => {
+      const urlParams = new URLSearchParams(location.search);
+      const sportFromURL = urlParams.get('sport');
+      if (sportFromURL) {
+        setSport(sportFromURL.charAt(0).toUpperCase() + sportFromURL.slice(1).toLowerCase());
+      }
+    };
+    extractSportFromURL();
+
+  }, [location.search, setSport]);
+
+
+  const shouldShowHeader = !['/login', '/signin', '/leagues/create-league'].includes(location.pathname);
   return (
     <>
       {shouldShowHeader && <Header />}
@@ -79,6 +125,9 @@ function App() {
             <Route path='/' element={<Home/>}/>
             <Route path='/login' element={<LogIn/>}/>
             <Route path='/signin' element={<SignIn/>}/>
+
+            <Route path="/leagues" exact element={<Leagues/>} />
+            <Route path="/leagues/create-league" exact element={<CreateLeauge/>} />
         </Routes>
     </>
   )

@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, redirect, url_for, session
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 import pymysql
 import jwt
 import datetime
@@ -7,6 +7,7 @@ from flask import g
 from werkzeug.security import generate_password_hash, check_password_hash
 import ignore
 from functools import wraps
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 ########################################
 #config starts 
@@ -30,11 +31,23 @@ JWT_ALGORITHM = "HS256"
 
 def token_required(f):
     def wrapper(*args, **kwargs):
+        if request.method == "OPTIONS":
+            response = jsonify({"message": "Preflight request successful"})
+            response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
+            response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization")
+            response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
+            response.headers.add("Access-Control-Allow-Credentials", "true")
+            return response, 200
+
         token = request.headers.get("Authorization")
+        print("Token from header:", token)
         if not token:
             return jsonify({"error": "Token is missing"}), 401
 
         try:
+            if token.startswith("Bearer "):
+                token = token[7:] 
+
             decoded = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
             g.user = decoded
         except jwt.ExpiredSignatureError:
@@ -45,24 +58,36 @@ def token_required(f):
         return f(*args, **kwargs)
     return wrapper
 
-def requires_role(role):
+def requires_role(*roles):
     def wrapper(func):
         @wraps(func)
         def decorated_function(*args, **kwargs):
+            if request.method == "OPTIONS":
+                return jsonify({"message": "Preflight request successful"}), 200
+
             token = request.headers.get("Authorization")
             if not token:
-                return jsonify({"error": "Token is missing"}), 401
+                return jsonify({"error": "Authorization token is missing"}), 401
 
             try:
+                if token.startswith("Bearer "):
+                    token = token[7:]
+
                 decoded = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
                 g.user = decoded
-                # Check if the user has the correct role
-                if g.user['role'] != role:
-                    return jsonify({"error": "You do not have the required permissions"}), 403
+
+                user_role = g.user.get("role")
+                if user_role is None:
+                    return jsonify({"error": "User role is missing in token"}), 403
+                if user_role not in roles:
+                    return jsonify({"error": "Insufficient permissions"}), 403
+
             except jwt.ExpiredSignatureError:
                 return jsonify({"error": "Token expired"}), 401
             except jwt.InvalidTokenError:
                 return jsonify({"error": "Invalid token"}), 401
+            except Exception as e:
+                return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
 
             return func(*args, **kwargs)
         return decorated_function
@@ -143,8 +168,15 @@ def login():
         if 'db' in locals():
             db.close()
 
-@app.route('/refresh/', methods=['POST'])
+@app.route('/refresh/', methods=['POST', 'OPTIONS'])
 def refresh():
+    if request.method == 'OPTIONS':
+        response = jsonify({"message": "Preflight request successful"})
+        response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+        response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        return response, 200
     try:
         data = request.get_json()
         refresh_token = data.get("refresh")
@@ -210,14 +242,117 @@ def signin():
     finally:
         if 'db' in locals():
             db.close()
+########################################
+#login related routes ends  
+########################################
+
+
+########################################
+#leagues related starts
+########################################
+@app.route('/get_leagues', methods=['GET'])
+@requires_role("admin", "user")
+def get_leagues():
+    try:
+        page = request.args.get('page', 1, type=int) 
+        per_page = request.args.get('per_page', 10, type=int)  
+        sport = request.args.get('sport')
+        offset = (page - 1) * per_page
+        
+        query = "SELECT * FROM leagues"
+        params = []
+
+        if sport:
+            query += " WHERE sport = %s"
+            params.append(sport)
+
+        query += " LIMIT %s OFFSET %s"
+        params.extend([per_page, offset])
+        
+        db = pymysql.connect(**db_config)
+        cursor = db.cursor()  # No 'dictionary' argument here; instead use DictCursor
+        cursor = db.cursor(pymysql.cursors.DictCursor)  # Use DictCursor for dict-like rows
+        cursor.execute(query, tuple(params))
+        leagues = cursor.fetchall()
+
+        # Get total count of leagues for pagination
+        count_query = "SELECT COUNT(*) FROM leagues"
+        if sport:
+            count_query += " WHERE sport = %s"
+        cursor.execute(count_query, tuple([sport] if sport else []))
+        total_leagues = cursor.fetchone()['COUNT(*)']
+        
+        cursor.close()
+        db.close()
+
+        # Calculate total pages
+        total_pages = (total_leagues + per_page - 1) // per_page  # Ceiling division
+
+        # Prepare the response
+        response = {
+            'leagues': leagues,
+            'total': total_leagues,
+            'pages': total_pages,
+            'current_page': page,
+            'per_page': per_page
+        }
+        
+        return jsonify(response), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/post_leagues/", methods=['POST', 'OPTIONS'], endpoint="post_leagues_endpoint")
+@token_required
+@requires_role("admin", "user")
+def post_leagues():
+    if request.method == 'OPTIONS':
+        response = jsonify({"message": "Preflight request successful"})
+        response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization") 
+        response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        return response, 200
+
+    data = request.get_json()
+    league_name = data.get('leagueName')
+    league_type = data.get('leagueType')
+    commissioner = data.get('userID')
+    max_teams = data.get('maxTeams')
+    draft_date = data.get('draftDate')
+    sport = data.get('initializedSports')
+
+    if not league_name or not league_type or not commissioner or not max_teams or not draft_date or not sport:
+        print(sport)
+        return jsonify({'message': 'Missing required fields'}), 400
+    
+    connection = pymysql.connect(**db_config)
+    cursor = connection.cursor()
+
+    try:
+        insert_query = """
+            INSERT INTO leagues (LeagueName, LeagueType, Commissioner, MaxTeams, DraftDate, Sport)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(insert_query, (league_name, league_type, commissioner, max_teams, draft_date, sport))
+        connection.commit()
+
+        return jsonify({'message': 'League created successfully'}), 201
+    except Exception as e:
+        connection.rollback()
+        print(f"Error occurred: {e}")
+        return jsonify({'message': str(e)}), 500
+    finally:
+        cursor.close()
+        connection.close()
 
 
 
-# @app.route("/", methods=['GET'])
-# @token_required
-# @requires_role('admin')
-# def home():
-#     return jsonify(simple=12)
+@app.route("/", methods=['GET'], endpoint="home_endpoint")
+@token_required
+@requires_role('admin')
+def home():
+    return jsonify(simple=12)
 
 if __name__ == "__main__":
     app.run(debug=True)
