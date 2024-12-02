@@ -7,12 +7,8 @@ import { useNavigate } from 'react-router-dom';
 
 const Players = () => {
     const navigate = useNavigate();
-
-    // Recoil state for selected sport
     const sport = useRecoilValue(selectedSportAtom);
     const initializedSports = useRecoilValue(changedSportSelector);
-
-    // State for player data and pagination
     const [players, setPlayers] = useState([]);
     const [pagination, setPagination] = useState({
         total: 0,
@@ -21,7 +17,6 @@ const Players = () => {
         per_page: 5,
     });
 
-    // Fetch players from API
     const fetchPlayers = async (page = 1) => {
         try {
             const tokens = JSON.parse(localStorage.getItem('tokens'));
@@ -68,16 +63,14 @@ const Players = () => {
         fetchPlayers();
     }, [sport]);
 
-    // Handle pagination
     const goToPage = (page) => {
         if (page >= 1 && page <= pagination.pages) {
             fetchPlayers(page);
         }
     };
 
-    // Navigate to player details
     const handleViewPlayerDetails = (playerId, playerName) => {
-        navigate(`/players/player-stats?playerId=${playerId}`, {
+        navigate(`/players/player-stats?playerId=${playerId}&sport=${sport.toLowerCase()}`, {
             state: { playerName },
         });
     };

@@ -1,45 +1,59 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import './PlayerStat.css';
 
 const PlayerStat = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const urlParams = new URLSearchParams(location.search);
     const playerName = location.state?.playerName;
     const playerId = urlParams.get('playerId');
-    const sport = urlParams.get('sport'); // Get sport from query parameter
+    const sports = urlParams.get('sport');
 
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Define the mapping of field names for different sports
     const fieldMapping = {
         football: {
             gameDate: 'GameDate',
             touchdowns: 'touchdowns',
             yards: 'yards',
             receptions: 'receptions',
+            carries: 'carries',
+            passes: 'passes',
+            blocks: 'blocks',
+            interceptions: 'interceptions',
+            sacks: 'sacks',
             injuryStatus: 'InjuryStatus'
         },
-        basketball: {
+        soccer: {
             gameDate: 'GameDate',
             points: 'points',
             assists: 'assists',
-            rebounds: 'rebounds',
+            passes: 'passes',
             injuryStatus: 'InjuryStatus'
         },
-        // Add more sports and field mappings as needed
     };
 
-    // Select the correct field names based on the sport
-    const fields = fieldMapping[sport] || fieldMapping.football; // Default to football if sport is not found
+    const fields = fieldMapping[sports]
 
     useEffect(() => {
         if (playerId) {
-            axios
-                .get(`/get_player_stat?player_id=${playerId}`)
+            const tokens = JSON.parse(localStorage.getItem('tokens'));
+            if (!tokens || !tokens.access) {
+                console.error('Access token is missing');
+                navigate('/login', { replace: true });
+                return;
+            }
+            const accessToken = tokens.access;
+            axios.get(`http://127.0.0.1:5000/get_player_stat?player_id=${playerId}`, {
+                headers: {
+                    'Authorization': `${accessToken}`,
+                    'Content-Type': 'application/json',
+                }
+            })
                 .then((response) => {
                     setStats(response.data.stats);
                     setLoading(false);
@@ -54,44 +68,95 @@ const PlayerStat = () => {
         }
     }, [playerId]);
 
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        return date.toLocaleDateString(undefined, options);
+    };
+
     return (
         <div className="player-stat-container">
             <h1 className="player-stat-title">Player Statistics</h1>
-            {playerName && <h2 className="player-stat-name">{playerName}</h2>}
-            {!playerId && <p className="error-text">No Player ID Provided</p>}
+
+            <div className="pplayer-info">
+                <img src="https://placehold.co/400x400" alt="Player" className="pplayer-image" />
+                {playerName && <h2 className="pplayer-name">{playerName}</h2>}
+            </div>
 
             {loading && <p className="loading-text">Loading stats...</p>}
             {error && <p className="error-text">{error}</p>}
 
             {stats && stats.length > 0 ? (
-                <table className="player-stat-table">
-                    <thead>
-                        <tr>
-                            <th>{fields.gameDate}</th>
-                            <th>{fields.touchdowns || fields.points}</th>
-                            <th>{fields.yards || fields.rebounds}</th>
-                            <th>{fields.receptions || fields.assists}</th>
-                            <th>{fields.injuryStatus}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {stats.map((stat) => {
-                            const performance = typeof stat.PerformanceStat === 'string'
-                                ? JSON.parse(stat.PerformanceStat)
-                                : stat.PerformanceStat;
+                <div className="player-stat-grid">
+                    {stats.map((stat) => {
+                        const performance = typeof stat.PerformanceStat === 'string'
+                            ? JSON.parse(stat.PerformanceStat)
+                            : stat.PerformanceStat;
 
-                            return (
-                                <tr key={stat.Stat_ID}>
-                                    <td>{stat[fields.gameDate]}</td>
-                                    <td>{performance[fields.touchdowns] || performance[fields.points] || '-'}</td>
-                                    <td>{performance[fields.yards] || performance[fields.rebounds] || '-'}</td>
-                                    <td>{performance[fields.receptions] || performance[fields.assists] || '-'}</td>
-                                    <td>{stat[fields.injuryStatus]}</td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
+                        return (
+                            <div key={stat.Stat_ID} className="stat-card">
+                                <div className="stat-item">
+                                    <strong>{fields.gameDate}:</strong> {formatDate(stat[fields.gameDate])}
+                                </div>
+
+                                {fields.touchdowns && (
+                                    <div className="stat-item">
+                                        <strong>{fields.touchdowns}:</strong> {performance[fields.touchdowns] || '-'}
+                                    </div>
+                                )}
+
+                                {fields.yards && (
+                                    <div className="stat-item">
+                                        <strong>{fields.yards}:</strong> {performance[fields.yards] || '-'}
+                                    </div>
+                                )}
+
+                                {fields.receptions && (
+                                    <div className="stat-item">
+                                        <strong>{fields.receptions}:</strong> {performance[fields.receptions] || '-'}
+                                    </div>
+                                )}
+
+                                {fields.carries && (
+                                    <div className="stat-item">
+                                        <strong>{fields.carries}:</strong> {performance[fields.carries] || '-'}
+                                    </div>
+                                )}
+
+                                {fields.passes && (
+                                    <div className="stat-item">
+                                        <strong>{fields.passes}:</strong> {performance[fields.passes] || '-'}
+                                    </div>
+                                )}
+
+                                {fields.blocks && (
+                                    <div className="stat-item">
+                                        <strong>{fields.blocks}:</strong> {performance[fields.blocks] || '-'}
+                                    </div>
+                                )}
+
+                                {fields.interceptions && (
+                                    <div className="stat-item">
+                                        <strong>{fields.interceptions}:</strong> {performance[fields.interceptions] || '-'}
+                                    </div>
+                                )}
+
+                                {fields.sacks && (
+                                    <div className="stat-item">
+                                        <strong>{fields.sacks}:</strong> {performance[fields.sacks] || '-'}
+                                    </div>
+                                )}
+
+                                {fields.injuryStatus && (
+                                    <div className="stat-item">
+                                        <strong>{fields.injuryStatus}:</strong> {stat[fields.injuryStatus]}
+                                    </div>
+                                )}
+                            </div>
+
+                        );
+                    })}
+                </div>
             ) : (
                 !loading && !error && <p className="no-stats-text">No stats found for this player.</p>
             )}
