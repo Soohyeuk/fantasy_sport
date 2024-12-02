@@ -76,10 +76,27 @@ const Drafts = () => {
     };
 
     // Add player to team
-    const handleAddToTeam = (playerId, playerName) => {
+    const handleAddToTeam = async (playerId, playerName) => {
         console.log(`Adding player ${playerName} (ID: ${playerId}) to the team.`);
         // You can integrate this with your backend API to add the player to the team.
         //setDraftedPlayers((prevDrafted) => new Set(prevDrafted).add(playerId));
+        const teamID = new URLSearchParams(location.search).get('teamID');
+        
+        const response = await fetch('http://localhost:5000/add_player', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            },
+            body: JSON.stringify({ player_id: playerId, team_id: teamId }),
+        });
+    
+        const result = await response.json();
+        if (response.ok) {
+            alert(result.message);
+        } else {
+            alert(`Error: ${result.error}`);
+        }
     };
 
     //const location = useLocation();
