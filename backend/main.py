@@ -1,16 +1,15 @@
-from flask import Flask, request, jsonify, redirect, url_for, session
-from flask_cors import CORS, cross_origin
+import hashlib
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 import pymysql
 import jwt
 from datetime import datetime, timedelta
 from flask import g
-from werkzeug.security import generate_password_hash, check_password_hash
 import ignore
 from functools import wraps
-from flask_jwt_extended import jwt_required, get_jwt_identity
 
-CLIENTADDRESS = "http://127.0.0.1:5173"
-DATABASENAME = "fantasy_sports"
+CLIENTADDRESS = "http://localhost:5173"
+DATABASENAME = "fsport"
 
 ########################################
 #config starts 
@@ -43,7 +42,7 @@ def token_required(f):
             return response, 200
 
         token = request.headers.get("Authorization")
-        print("Token from header:", token)
+        # print("Token from header:", token)
         if not token:
             return jsonify({"error": "Token is missing"}), 401
 
@@ -134,7 +133,7 @@ def login():
         db = pymysql.connect(**db_config)
         with db.cursor() as cursor:
             query = "SELECT * FROM Users WHERE Username = %s AND Password = %s"
-            cursor.execute(query, (username, password))
+            cursor.execute(query, (username, hashlib.sha256(password.encode()).hexdigest()))
             user = cursor.fetchone()
 
         # if user and check_password_hash(user["Password"], password):
@@ -246,7 +245,7 @@ def signin():
         if not username or not password or not email:
             return jsonify({"error": "Username and password are required"}), 400
 
-        hashed_password = generate_password_hash(password, method="pbkdf2")
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
         db = pymysql.connect(**db_config)
         with db.cursor() as cursor:
             #checking if user already exists
@@ -260,7 +259,7 @@ def signin():
 
             #if new, insert into the database
             insert_query = "INSERT INTO Users (Username, Email, Password) VALUES (%s, %s, %s)"
-            cursor.execute(insert_query, (username, email, password))
+            cursor.execute(insert_query, (username, email, hashed_password))
             db.commit()
 
         return jsonify({"message": "User created successfully"}), 201
