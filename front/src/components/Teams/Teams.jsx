@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import './Teams.css'
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useRecoilValue } from 'recoil';
+import { user_id } from '../../recoil/AuthAtom';
 
 const Teams = () => {
+    const currentUser = useRecoilValue(user_id);
     const location = useLocation();
     const urlParams = new URLSearchParams(location.search);
     const leagueId = urlParams.get('leagueId');
@@ -82,7 +85,12 @@ const Teams = () => {
         })
     }
 
-    const handleViewDraft = (leagueId, teamId) => {
+    const handleViewDraft = async(leagueId, teamId, owner) => {
+        if (currentUser !== owner){
+            alert('You do not own this team.');
+            return;
+        }
+
         const urlParams = new URLSearchParams(window.location.search);
         const sport = urlParams.get('sport');
         const team = urlParams.get('team');
@@ -143,7 +151,7 @@ const Teams = () => {
                         {team.Status}
                         </p>
                     </div>
-                    <button className="view-teams" onClick={() => handleViewDraft(team.League_ID, team.Team_ID)}>Draft</button>
+                    <button className="view-teams" onClick={() => handleViewDraft(team.League_ID, team.Team_ID, team.Owner)}>Draft</button>
                 </div>
             ))
             ) : (
