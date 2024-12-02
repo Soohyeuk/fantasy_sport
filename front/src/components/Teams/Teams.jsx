@@ -98,6 +98,36 @@ const Teams = () => {
             state: { team, sport },
         });
     };
+
+    const handleViewTrade = async(leagueId, teamId, owner) => {
+        if (currentUser !== owner){
+            alert('You do not own this team.');
+            return;
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const sport = urlParams.get('sport');
+        const team = urlParams.get('team');
+        navigate(`/drafts?leagueId=${leagueId}&teamId=${teamId}&sport=${sport}&team=${team}`, {
+            state: { team, sport },
+        });
+    };
+
+    const handleViewDelete = async(leagueId, teamId, owner) => {
+        if (currentUser !== owner){
+            alert('You do not own this team.');
+            return;
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const sport = urlParams.get('sport');
+        const team = urlParams.get('team');
+        navigate(`/drafts?leagueId=${leagueId}&teamId=${teamId}&sport=${sport}&team=${team}`, {
+            state: { team, sport },
+        });
+    };
+
+    
     
 
     
@@ -152,6 +182,8 @@ const Teams = () => {
                         </p>
                     </div>
                     <button className="view-teams" onClick={() => handleViewDraft(team.League_ID, team.Team_ID, team.Owner)}>Draft</button>
+                    <button className="view-teams" onClick={() => handleViewTrade(team.League_ID, team.Team_ID, team.Owner)}>Trade</button>
+                    <button className="delete-teams" onClick={() => handleViewDelete(team.League_ID, team.Team_ID, team.Owner)}>Delete</button>
                 </div>
             ))
             ) : (

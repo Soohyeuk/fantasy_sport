@@ -67,17 +67,15 @@
 
 .add-to-team-button {
     padding: 5px 15px;
-    background-color: var(--secondary-color);
-    color: rgb(0, 0, 0);
+    background-color: var(--main-color);
+    color: rgb(255, 255, 255);
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
 }
 
 .add-to-team-button:hover {
-    background-color: var(--hover-color);
-    opacity: 0.9;
+        opacity: 0.9;
 }
 
 .add-to-team-button:disabled {
