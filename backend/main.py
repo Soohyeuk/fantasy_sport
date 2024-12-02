@@ -4,13 +4,14 @@ import pymysql
 import jwt
 from datetime import datetime, timedelta
 from flask import g
+import pymysql.cursors
 from werkzeug.security import generate_password_hash, check_password_hash
 import ignore
 from functools import wraps
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-CLIENTADDRESS = "http://127.0.0.1:5173"
-DATABASENAME = "fantasy_sports"
+CLIENTADDRESS = "http://localhost:5174"
+DATABASENAME = "fsport"
 
 ########################################
 #config starts 
@@ -551,11 +552,29 @@ def post_teams():
     finally:
         cursor.close()
         connection.close()
+
 ########################################
 #team related ends
 ########################################
         
+########################################
+#draft related starts
+########################################
 
+@app.route('/drafts?leagueId=${leagueId}&teamId=${teamId}&sport=${sport}&team=${team}')
+@requires_role("admin", "user")
+def add_player(player_id, team_id):
+    try:
+        db = pymysql.connect(**db_config)
+        cursor = db.cursor(pymysql.cursors.DictCursor)
+
+        query_add = "INSERT INTO PlayersTeams(Player_ID, Team_ID) VALUES (%s, %s)"
+        cursor.execute(query_add, (player_id, team_id))
+        cursor.close()
+        db.close()
+        return jsonify("Player added to team"), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
 ########################################
 #match related starts
