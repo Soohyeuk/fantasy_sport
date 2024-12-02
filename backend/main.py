@@ -117,7 +117,7 @@ def requires_role(*roles):
 def login():
     if request.method == 'OPTIONS':
         response = jsonify({"message": "Preflight request successful"})
-        response.headers.add("Access-Control-Allow-Origin", "CLIENTADDRESS")
+        response.headers.add("Access-Control-Allow-Origin", CLIENTADDRESS)
         response.headers.add("Access-Control-Allow-Headers", "Content-Type")
         response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
         response.headers.add("Access-Control-Allow-Credentials", "true")
