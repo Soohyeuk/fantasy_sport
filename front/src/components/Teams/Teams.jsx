@@ -82,6 +82,16 @@ const Teams = () => {
         })
     }
 
+    const handleViewDraft = (leagueId, teamId) => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sport = urlParams.get('sport');
+        const team = urlParams.get('team');
+        navigate(`/drafts?leagueId=${leagueId}&teamId=${teamId}&sport=${sport}&team=${team}`, {
+            state: { team, sport },
+        });
+    };
+    
+
     
 
 
@@ -133,7 +143,7 @@ const Teams = () => {
                         {team.Status}
                         </p>
                     </div>
-                    <button className="view-teams">View Players</button>
+                    <button className="view-teams" onClick={() => handleViewDraft(team.League_ID, team.Team_ID)}>Draft</button>
                 </div>
             ))
             ) : (

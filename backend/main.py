@@ -9,8 +9,8 @@ import ignore
 from functools import wraps
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-CLIENTADDRESS = "http://localhost:5174"
-DATABASENAME = "fsport"
+CLIENTADDRESS = "http://127.0.0.1:5173"
+DATABASENAME = "fantasy_sports"
 
 ########################################
 #config starts 
