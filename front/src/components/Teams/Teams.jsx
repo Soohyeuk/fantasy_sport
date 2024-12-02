@@ -82,6 +82,8 @@ const Teams = () => {
         })
     }
 
+    
+
 
   return (
     <div className="biggest">

@@ -56,6 +56,7 @@ const Header = () => {
       <nav className='header-links'>
         <Link className='links hover' to={`/leagues?sport=${selectedSport.toLowerCase()}`}>Leagues</Link>
         <Link className='links hover' to={'/faq'}>FAQ</Link>
+        <Link className='links hover' to={'/players'}>Players</Link>
         <Link className='links hover' to={'/profile-setting'}>Profile Setting</Link>
       </nav>
       <div className='header-user'>

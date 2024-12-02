@@ -13,14 +13,14 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 #config starts 
 ########################################
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
+CORS(app, origins=["http://127.0.0.1:5173"], supports_credentials=True)
 
 db_config = {
     "host": "localhost",
     "port": 3306,
     "user": "root",
     "password": "",
-    "database": "fsport",
+    "database": "fantasy_sports",
     "charset": "utf8mb4",
     "cursorclass": pymysql.cursors.DictCursor
 }
@@ -33,7 +33,7 @@ def token_required(f):
     def wrapper(*args, **kwargs):
         if request.method == "OPTIONS":
             response = jsonify({"message": "Preflight request successful"})
-            response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
+            response.headers.add("Access-Control-Allow-Origin", "http://127.0.0.1:5173")
             response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization")
             response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
             response.headers.add("Access-Control-Allow-Credentials", "true")
@@ -66,7 +66,7 @@ def requires_role(*roles):
         def decorated_function(*args, **kwargs):
             if request.method == "OPTIONS":
                 response = jsonify({"message": "Preflight request successful"})
-                response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
+                response.headers.add("Access-Control-Allow-Origin", "http://127.0.0.1:5173")
                 response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization")
                 response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
                 response.headers.add("Access-Control-Allow-Credentials", "true")
@@ -114,7 +114,7 @@ def requires_role(*roles):
 def login():
     if request.method == 'OPTIONS':
         response = jsonify({"message": "Preflight request successful"})
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
+        response.headers.add("Access-Control-Allow-Origin", "http://127.0.0.1:5173")
         response.headers.add("Access-Control-Allow-Headers", "Content-Type")
         response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
         response.headers.add("Access-Control-Allow-Credentials", "true")
@@ -181,7 +181,7 @@ def login():
 def refresh():
     if request.method == 'OPTIONS':
         response = jsonify({"message": "Preflight request successful"})
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
+        response.headers.add("Access-Control-Allow-Origin", "http://127.0.0.1:5173")
         response.headers.add("Access-Control-Allow-Headers", "Content-Type")
         response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
         response.headers.add("Access-Control-Allow-Credentials", "true")
@@ -333,7 +333,7 @@ def get_leagues():
 def post_leagues():
     if request.method == 'OPTIONS':
         response = jsonify({"message": "Preflight request successful"})
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
+        response.headers.add("Access-Control-Allow-Origin", "http://127.0.0.1:5173")
         response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization") 
         response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
         response.headers.add("Access-Control-Allow-Credentials", "true")
@@ -382,8 +382,84 @@ def post_leagues():
 ########################################
 #leagues related ends
 ########################################
-        
 
+########################################
+#players related starts
+########################################
+
+@app.route('/get_players', methods=['GET'])
+@requires_role("admin", "user")
+def get_players():
+    try:
+        # Fetch query parameters
+        page = request.args.get('page', 1, type=int)  # Default to page 1
+        per_page = request.args.get('per_page', 10, type=int)  # Default to 10 players per page
+        sport = request.args.get('sport')  # Optional filter by sport
+        player_id = request.args.get('player_id')  # Optional filter by player ID
+        offset = (page - 1) * per_page  # Calculate offset for pagination
+
+        # Build base query
+        query = "SELECT * FROM players"
+        params = []
+
+        # Apply filters if provided
+        if sport or player_id:
+            query += " WHERE"
+            if sport:
+                query += " sport = %s"
+                params.append(sport)
+            if player_id:
+                if sport:
+                    query += " AND"
+                query += " Player_ID = %s"
+                params.append(player_id)
+
+        # Add pagination
+        query += " LIMIT %s OFFSET %s"
+        params.extend([per_page, offset])
+
+        # Execute the query
+        db = pymysql.connect(**db_config)
+        cursor = db.cursor(pymysql.cursors.DictCursor)
+        cursor.execute(query, tuple(params))
+        players = cursor.fetchall()
+
+        # Count total players for pagination
+        count_query = "SELECT COUNT(*) as total FROM players"
+        if sport or player_id:
+            count_query += " WHERE"
+            if sport:
+                count_query += " sport = %s"
+            if player_id:
+                if sport:
+                    count_query += " AND"
+                count_query += " Player_ID = %s"
+        cursor.execute(count_query, tuple([sport, player_id] if sport and player_id else [sport or player_id]))
+        total_players = cursor.fetchone()['total']
+
+        cursor.close()
+        db.close()
+
+        # Calculate total pages
+        total_pages = (total_players + per_page - 1) // per_page
+
+        # Prepare response
+        response = {
+            'players': players,
+            'total': total_players,
+            'pages': total_pages,
+            'current_page': page,
+            'per_page': per_page
+        }
+
+        return jsonify(response), 200
+    except Exception as e:
+        print(f"Error fetching players: {e}")
+        return jsonify({"error": str(e)}), 400
+
+########################################
+#players related ends
+########################################
 
 ########################################
 #team related starts
@@ -439,7 +515,7 @@ def get_teams():
 def post_teams():
     if request.method == 'OPTIONS':
         response = jsonify({"message": "Preflight request successful"})
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
+        response.headers.add("Access-Control-Allow-Origin", "http://127.0.0.1:5173")
         response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization") 
         response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
         response.headers.add("Access-Control-Allow-Credentials", "true")
@@ -557,7 +633,7 @@ def get_league_matches(league_id):
 def update_profile():
     if request.method == 'OPTIONS':
         response = jsonify({"message": "Preflight request successful"})
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
+        response.headers.add("Access-Control-Allow-Origin", "http://127.0.0.1:5173")
         response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization") 
         response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
         response.headers.add("Access-Control-Allow-Credentials", "true")
