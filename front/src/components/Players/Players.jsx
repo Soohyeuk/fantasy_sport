@@ -77,7 +77,7 @@ const Players = () => {
 
     // Navigate to player details
     const handleViewPlayerDetails = (playerId, playerName) => {
-        navigate(`/player/details?playerId=${playerId}`, {
+        navigate(`/players/player-stats?playerId=${playerId}`, {
             state: { playerName },
         });
     };

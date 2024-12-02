@@ -8,8 +8,8 @@ from flask import g
 import ignore
 from functools import wraps
 
-CLIENTADDRESS = "http://127.0.0.1:5173"
-DATABASENAME = "fsport"
+CLIENTADDRESS = "http://localhost:5173"
+DATABASENAME = "fsports"
 
 ########################################
 #config starts 
@@ -458,6 +458,38 @@ def get_players():
     except Exception as e:
         print(f"Error fetching players: {e}")
         return jsonify({"error": str(e)}), 400
+
+
+@app.route('/get_player_stat', methods=['GET'])
+@requires_role("admin", "user")
+def get_player_stat():
+    try:
+        player_id = request.args.get('player_id', type=int)  
+        if not player_id:
+            return jsonify({"error": "player_id is required"}), 400
+
+        query = "SELECT * FROM PlayerStatistics WHERE Player_ID = %s"
+        params = [player_id]
+        db = pymysql.connect(**db_config)
+        cursor = db.cursor(pymysql.cursors.DictCursor)
+        cursor.execute(query, tuple(params))
+        stats = cursor.fetchall()
+
+        cursor.close()
+        db.close()
+
+        if not stats:
+            return jsonify({"message": "No statistics found for the given player_id"}), 404
+        response = {
+            'player_id': player_id,
+            'stats': stats
+        }
+
+        return jsonify(response), 200
+    except Exception as e:
+        print(f"Error fetching player stats: {e}")
+        return jsonify({"error": str(e)}), 400
+
 
 ########################################
 #players related ends
