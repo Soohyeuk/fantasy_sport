@@ -8,7 +8,7 @@ from flask import g
 import ignore
 from functools import wraps
 
-CLIENTADDRESS = "http://localhost:5173"
+CLIENTADDRESS = "http://127.0.0.1:5173"
 DATABASENAME = "fsport"
 
 ########################################

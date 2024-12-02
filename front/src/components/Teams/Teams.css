@@ -95,7 +95,19 @@
     cursor: pointer;
 }
 
-.view-teams:hover {
+.delete-teams {
+    padding: 5px 15px;
+    background-color: rgb(255, 0, 0);
+    color: rgb(255, 255, 255);
+    border: none;
+    width: 100px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+
+
+.view-teams:hover, .delete-teams:hover {
     opacity: 0.5; 
 }
 
