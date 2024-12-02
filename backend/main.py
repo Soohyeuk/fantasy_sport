@@ -561,20 +561,54 @@ def post_teams():
 #draft related starts
 ########################################
 
-@app.route('/drafts?leagueId=${leagueId}&teamId=${teamId}&sport=${sport}&team=${team}')
+@app.route('/add_player', methods=['POST', 'OPTIONS'])
 @requires_role("admin", "user")
-def add_player(player_id, team_id):
+def add_player_to_team():
+    if request.method == 'OPTIONS':
+        response = jsonify({"message": "Preflight request successful"})
+        response.headers.add("Access-Control-Allow-Origin", CLIENTADDRESS)
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        return response, 200
+
+    data = request.get_json()
+    player_id = data.get("player_id")
+    team_id = data.get("team_id")
+
+    if not player_id or not team_id:
+        return jsonify({"error": "Player ID and Team ID are required"}), 400
+
     try:
         db = pymysql.connect(**db_config)
-        cursor = db.cursor(pymysql.cursors.DictCursor)
+        cursor = db.cursor()
 
-        query_add = "INSERT INTO PlayersTeams(Player_ID, Team_ID) VALUES (%s, %s)"
-        cursor.execute(query_add, (player_id, team_id))
+        # Check if the player already exists on the team
+        cursor.execute(
+            "SELECT * FROM PlayersTeams WHERE Player_ID = %s AND Team_ID = %s",
+            (player_id, team_id)
+        )
+        if cursor.fetchone():
+            return jsonify({"error": "Player is already on this team"}), 400
+
+        # Add the player to the PlayersTeams table
+        cursor.execute(
+            "INSERT INTO PlayersTeams (Player_ID, Team_ID) VALUES (%s, %s)",
+            (player_id, team_id)
+        )
+        db.commit()
+
+        return jsonify({"message": f"Player {player_id} added to Team {team_id} and points updated"}), 201
+    except pymysql.MySQLError as e:
+        db.rollback()
+        print("Database error:", e)
+        return jsonify({"error": "Database connection error"}), 500
+    except Exception as e:
+        print("Server error:", e)
+        return jsonify({"error": str(e)}), 500
+    finally:
         cursor.close()
         db.close()
-        return jsonify("Player added to team"), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
 
 ########################################
 #match related starts
