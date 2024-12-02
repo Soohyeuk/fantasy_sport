@@ -10,7 +10,7 @@ import { jwtDecode } from "jwt-decode";
 import { AuthAtom, AuthUser } from './recoil/AuthAtom'
 import { selectedSportAtom } from './recoil/Sport'
 import Leagues from './components/Leagues/Leagues'
-import CreateLeauge from './components/Leagues/CreateLeauge'
+import CreateLeague from './components/Leagues/CreateLeague'
 import Teams from './components/Teams/Teams'
 import CreateTeam from './components/Teams/CreateTeam'
 import Matches from './components/Matches/Matches'
@@ -121,7 +121,7 @@ function App() {
             <Route path='/signin' element={<SignIn/>}/>
 
             <Route path="/leagues" exact element={<Leagues/>} />
-            <Route path="/leagues/create-league" exact element={<CreateLeauge/>} />
+            <Route path="/leagues/create-league" exact element={<CreateLeague/>} />
             <Route path="/matches" element={<Matches />} />
 
 

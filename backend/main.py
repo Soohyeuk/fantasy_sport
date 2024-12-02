@@ -9,18 +9,21 @@ import ignore
 from functools import wraps
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
+CLIENTADDRESS = "http://localhost:5174"
+DATABASENAME = "fsport"
+
 ########################################
 #config starts 
 ########################################
 app = Flask(__name__)
-CORS(app, origins=["http://127.0.0.1:5173"], supports_credentials=True)
+CORS(app, origins=[CLIENTADDRESS], supports_credentials=True)
 
 db_config = {
     "host": "localhost",
     "port": 3306,
     "user": "root",
     "password": "",
-    "database": "fantasy_sports",
+    "database": DATABASENAME,
     "charset": "utf8mb4",
     "cursorclass": pymysql.cursors.DictCursor
 }
@@ -33,7 +36,7 @@ def token_required(f):
     def wrapper(*args, **kwargs):
         if request.method == "OPTIONS":
             response = jsonify({"message": "Preflight request successful"})
-            response.headers.add("Access-Control-Allow-Origin", "http://127.0.0.1:5173")
+            response.headers.add("Access-Control-Allow-Origin", CLIENTADDRESS)
             response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization")
             response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
             response.headers.add("Access-Control-Allow-Credentials", "true")
@@ -66,7 +69,7 @@ def requires_role(*roles):
         def decorated_function(*args, **kwargs):
             if request.method == "OPTIONS":
                 response = jsonify({"message": "Preflight request successful"})
-                response.headers.add("Access-Control-Allow-Origin", "http://127.0.0.1:5173")
+                response.headers.add("Access-Control-Allow-Origin", CLIENTADDRESS)
                 response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization")
                 response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
                 response.headers.add("Access-Control-Allow-Credentials", "true")
@@ -114,7 +117,7 @@ def requires_role(*roles):
 def login():
     if request.method == 'OPTIONS':
         response = jsonify({"message": "Preflight request successful"})
-        response.headers.add("Access-Control-Allow-Origin", "http://127.0.0.1:5173")
+        response.headers.add("Access-Control-Allow-Origin", CLIENTADDRESS)
         response.headers.add("Access-Control-Allow-Headers", "Content-Type")
         response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
         response.headers.add("Access-Control-Allow-Credentials", "true")
@@ -181,7 +184,7 @@ def login():
 def refresh():
     if request.method == 'OPTIONS':
         response = jsonify({"message": "Preflight request successful"})
-        response.headers.add("Access-Control-Allow-Origin", "http://127.0.0.1:5173")
+        response.headers.add("Access-Control-Allow-Origin", CLIENTADDRESS)
         response.headers.add("Access-Control-Allow-Headers", "Content-Type")
         response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
         response.headers.add("Access-Control-Allow-Credentials", "true")
@@ -333,7 +336,7 @@ def get_leagues():
 def post_leagues():
     if request.method == 'OPTIONS':
         response = jsonify({"message": "Preflight request successful"})
-        response.headers.add("Access-Control-Allow-Origin", "http://127.0.0.1:5173")
+        response.headers.add("Access-Control-Allow-Origin", CLIENTADDRESS)
         response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization") 
         response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
         response.headers.add("Access-Control-Allow-Credentials", "true")
@@ -515,7 +518,7 @@ def get_teams():
 def post_teams():
     if request.method == 'OPTIONS':
         response = jsonify({"message": "Preflight request successful"})
-        response.headers.add("Access-Control-Allow-Origin", "http://127.0.0.1:5173")
+        response.headers.add("Access-Control-Allow-Origin", CLIENTADDRESS)
         response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization") 
         response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
         response.headers.add("Access-Control-Allow-Credentials", "true")
@@ -633,7 +636,7 @@ def get_league_matches(league_id):
 def update_profile():
     if request.method == 'OPTIONS':
         response = jsonify({"message": "Preflight request successful"})
-        response.headers.add("Access-Control-Allow-Origin", "http://127.0.0.1:5173")
+        response.headers.add("Access-Control-Allow-Origin", CLIENTADDRESS)
         response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization") 
         response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
         response.headers.add("Access-Control-Allow-Credentials", "true")
