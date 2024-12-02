@@ -1,3 +1,5 @@
+@import url('/src/global.css');
+
 .drafts-container {
     width: 95%;
     min-height: 100vh;
