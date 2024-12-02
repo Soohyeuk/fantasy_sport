@@ -93,9 +93,8 @@ const Teams = () => {
 
         const urlParams = new URLSearchParams(window.location.search);
         const sport = urlParams.get('sport');
-        const team = urlParams.get('team');
-        navigate(`/drafts?leagueId=${leagueId}&teamId=${teamId}&sport=${sport}&team=${teams}`, {
-            state: { team, sport },
+        navigate(`/drafts?leagueId=${leagueId}&teamId=${teamId}&sport=${sport}`, {
+            state: { teamId, sport, owner },
         });
     };
 
@@ -107,9 +106,8 @@ const Teams = () => {
 
         const urlParams = new URLSearchParams(window.location.search);
         const sport = urlParams.get('sport');
-        const team = urlParams.get('team');
-        navigate(`/trades?leagueId=${leagueId}&teamId=${teamId}&sport=${sport}&team=${team}`, {
-            state: { team, sport },
+        navigate(`/trades?leagueId=${leagueId}&teamId=${teamId}&sport=${sport}`, {
+            state: { teamId, sport, owner },
         });
     };
 
@@ -122,8 +120,8 @@ const Teams = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const sport = urlParams.get('sport');
         const team = urlParams.get('team');
-        navigate(`/drafts?leagueId=${leagueId}&teamId=${teamId}&sport=${sport}&team=${team}`, {
-            state: { team, sport },
+        navigate(`/drafts?leagueId=${leagueId}&teamId=${teamId}&sport=${sport}`, {
+            state: { teamId, sport, owner },
         });
     };
 
