@@ -13,6 +13,7 @@ const Teams = () => {
     const sport = urlParams.get('sport');
     const leagueName = location.state?.leagueName;
     const leagueType = location.state?.leagueType;
+    const leagueOwner = location.state?.leagueOwner;
 
     const navigate = useNavigate();
     const [teams, setTeams] = useState([]); 
@@ -111,19 +112,42 @@ const Teams = () => {
         });
     };
 
-    const handleViewDelete = async(leagueId, teamId, owner) => {
-        if (currentUser !== owner){
+    const handleDelete = async (leagueId, teamId, owner) => {
+        if (currentUser !== owner) {
             alert('You do not own this team.');
             return;
         }
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const sport = urlParams.get('sport');
-        const team = urlParams.get('team');
-        navigate(`/drafts?leagueId=${leagueId}&teamId=${teamId}&sport=${sport}`, {
-            state: { teamId, sport, owner },
-        });
+    
+        const confirmDelete = window.confirm('Are you sure you want to delete this team?');
+        if (!confirmDelete) return;
+    
+        try {
+            const tokens = JSON.parse(localStorage.getItem('tokens'));
+            if (!tokens || !tokens.access) {
+                console.error('Access token is missing');
+                navigate('/login', { replace: true });
+                return;
+            }
+            const accessToken = tokens.access;
+    
+            const response = await axios.delete(`http://127.0.0.1:5000/delete_team/${teamId}`, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            });
+    
+            if (response.status === 200) {
+                alert('Team deleted successfully');
+                setTeams((prevTeams) => prevTeams.filter((team) => team.Team_ID !== teamId)); // Update UI
+            } else {
+                console.error('Unexpected response:', response.data);
+            }
+        } catch (error) {
+            console.error('Error deleting the team:', error);
+            alert('Failed to delete the team. Please try again.');
+        }
     };
+    
 
   return (
     <div className="biggest">
@@ -173,9 +197,9 @@ const Teams = () => {
                         {team.Status}
                         </p>
                     </div>
-                    <button className="view-teams" onClick={() => handleViewDraft(team.League_ID, team.Team_ID, team.Owner)}>Draft</button>
-                    <button className="view-teams" onClick={() => handleViewTrade(team.League_ID, team.Team_ID, team.Owner)}>Trade</button>
-                    <button className="delete-teams" onClick={() => handleViewDelete(team.League_ID, team.Team_ID, team.Owner)}>Delete</button>
+                    <button className="view-teams" onClick={() => handleViewDraft(leagueId, team.Team_ID, team.Owner)}>Draft</button>
+                    <button className="view-teams" onClick={() => handleViewTrade(leagueId, team.Team_ID, team.Owner)}>Trade</button>
+                    <button className="delete-teams" onClick={() => handleDelete(leagueId, team.Team_ID, team.Owner)}>Delete</button>
                 </div>
             ))
             ) : (

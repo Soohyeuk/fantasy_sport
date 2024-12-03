@@ -10,7 +10,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import ignore
 from functools import wraps
 
-CLIENTADDRESS = "http://localhost:5174"
+CLIENTADDRESS = "http://127.0.0.1:5173"
 DATABASENAME = "fsport"
 
 ########################################
@@ -72,7 +72,7 @@ def requires_role(*roles):
                 response = jsonify({"message": "Preflight request successful"})
                 response.headers.add("Access-Control-Allow-Origin", CLIENTADDRESS)
                 response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization")
-                response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
+                response.headers.add("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
                 response.headers.add("Access-Control-Allow-Credentials", "true")
                 return response, 200
 
@@ -758,6 +758,54 @@ def post_teams():
     finally:
         cursor.close()
         connection.close()
+
+
+@app.route("/delete_team/<int:team_id>", methods=['DELETE', 'OPTIONS'], endpoint="delete_team_endpoint")
+@requires_role("admin", "user")
+def delete_team(team_id):
+    if request.method == 'OPTIONS':
+        # Handle preflight request for CORS
+        response = jsonify({"message": "Preflight request successful"})
+        response.headers.add("Access-Control-Allow-Origin", CLIENTADDRESS)
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        response.headers.add("Access-Control-Allow-Methods", "DELETE, OPTIONS")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        return response, 200
+
+    try:
+        print("BAAALLLS")
+        connection = pymysql.connect(**db_config)
+        cursor = connection.cursor()
+
+        # Check if the team exists
+        check_query = "SELECT * FROM teams WHERE Team_ID = %s"
+        cursor.execute(check_query, (team_id))
+        team = cursor.fetchone()
+
+        # print("BALLLS")
+        if not team:
+            return jsonify({'message': 'Team not found'}), 404
+            
+
+        # Delete the team
+        delete_query = "DELETE FROM teams WHERE Team_ID = %s"
+        cursor.execute(delete_query, (team_id, ))
+        connection.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({'message': 'Failed to delete the team. Please try again.'}), 500
+
+        return jsonify({'message': 'Team deleted successfully'}), 200
+    except pymysql.MySQLError as e:
+        print(f"MySQL Error: {e}")
+        return jsonify({'error': 'Database error occurred'}), 500
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        return jsonify({'error': 'An unexpected error occurred'}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
 
 ########################################
 #team related ends
