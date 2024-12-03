@@ -3,11 +3,12 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import pymysql
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from flask import g
 import pymysql.cursors
 from werkzeug.security import generate_password_hash, check_password_hash
 import ignore
+from pytz import timezone
 from functools import wraps
 
 CLIENTADDRESS = "http://localhost:5173"
@@ -355,8 +356,10 @@ def post_leagues():
         return jsonify({'message': 'Missing required fields'}), 400
     
     try:
-        draft_date_parsed = datetime.strptime(draft_date, "%Y-%m-%dT%H:%M") 
-        if draft_date_parsed <= datetime.utcnow() + timedelta(hours=1):
+        draft_date_parsed = timezone("America/New_York").localize(datetime.strptime(draft_date, "%Y-%m-%dT%H:%M")).astimezone(timezone("UTC"))
+        print(draft_date_parsed)
+        print(datetime.now().astimezone(timezone("UTC")) + timedelta(hours=1))
+        if draft_date_parsed <= datetime.now().astimezone(timezone("UTC")) + timedelta(hours=1):
             print("nah")
             return jsonify({'message': 'Draft date must be at least one hour after the current UTC time'}), 400
     except ValueError:
