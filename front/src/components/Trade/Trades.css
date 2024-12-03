@@ -1,6 +1,6 @@
 @import url('/src/global.css');
 
-.drafts-container {
+.biggest {
     width: 95%;
     min-height: 100vh;
     display: flex;
@@ -10,14 +10,24 @@
     padding: 20px;
 }
 
-.drafts-title {
-    font-size: 25px;
-    padding: 25px 0;
+.trades-upper {
+    width: 70%;
+    padding-left: 35px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
 }
 
-.drafts-bground {
+.create-trades {
+    font-size: 17px;
+    height: 40px;
+}
+
+.trades-bground {
     background-color: var(--first-gray);
     width: 70%;
+    min-height: auto;
     padding: 20px;
     border-radius: 8px;
     display: flex;
@@ -25,7 +35,19 @@
     gap: 15px;
 }
 
-.player-container {
+.trade-title {
+    font-size: 25px;
+    padding: 25px 0px;
+}
+
+.trade-img {
+    width: 75px;
+    height: 75px; 
+    border-radius: 50%; 
+    object-fit: cover;
+}
+
+.trade-container {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -36,61 +58,55 @@
     gap: 15px;
 }
 
-.player-img {
-    width: 75px;
-    height: 75px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.player-info {
+.trade-info {
     display: flex;
     width: 80%;
     gap: 5px;
-    align-items: center;
+    align-items: center; 
 }
 
-.player-info p {
-    flex: 1;
-    text-align: center;
-    margin: 0;
-    line-height: 1.5;
+.trade-info p {
+    flex: 1; 
+    text-align: center; 
+    margin: 0; 
+    line-height: 1.5; 
+    vertical-align: middle; 
 }
 
-.player-name {
+.trade-name {
     font-size: 18px;
     font-weight: bold;
 }
 
-.player-stat {
+.trade-type,
+.trade-value,
+.trade-status {
     font-size: 14px;
     color: gray;
 }
 
-.add-to-team-button {
+.view-trades {
     padding: 5px 15px;
     background-color: var(--main-color);
-    color: rgb(255, 255, 255);
+    color: white;
     border: none;
+    width: 100px;
     border-radius: 5px;
     cursor: pointer;
 }
 
-.add-to-team-button:hover {
-        opacity: 0.9;
+.cancel-trades {
+    padding: 5px 15px;
+    background-color: rgb(255, 0, 0);
+    color: rgb(255, 255, 255);
+    border: none;
+    width: 100px;
+    border-radius: 5px;
+    cursor: pointer;
 }
 
-.add-to-team-button:disabled {
-    background-color: grey;
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-
-.no-players {
-    text-align: center;
-    color: gray;
-    font-size: 16px;
+.view-trades:hover, .cancel-trades:hover {
+    opacity: 0.5; 
 }
 
 .pagination-controls {
@@ -108,11 +124,6 @@
     color: white;
     border: none;
     border-radius: 5px;
-    transition: background-color 0.3s ease;
-}
-
-.pagination-controls button:hover:not(:disabled) {
-    background-color: var(--hover-color);
 }
 
 .pagination-controls button:disabled {

@@ -30,7 +30,7 @@ const Header = () => {
     searchParams.set('sport', sport.toLowerCase());
     setIsDropdownOpen(false);
 
-    if (location.pathname === '/') {
+    if (location.pathname === '/' || location.pathname === '/players') {
       navigate(`${location.pathname}?${searchParams.toString()}`);
     } else {
       navigate(`/leagues?${searchParams.toString()}`);
@@ -56,7 +56,7 @@ const Header = () => {
       <nav className='header-links'>
         <Link className='links hover' to={`/leagues?sport=${selectedSport.toLowerCase()}`}>Leagues</Link>
         <Link className='links hover' to={'/faq'}>FAQ</Link>
-        <Link className='links hover' to={'/players'}>Players</Link>
+        <Link className='links hover' to={`/players?sport=${selectedSport.toLowerCase()}`}>Players</Link>
         <Link className='links hover' to={'/profile-setting'}>Profile Setting</Link>
       </nav>
       <div className='header-user'>

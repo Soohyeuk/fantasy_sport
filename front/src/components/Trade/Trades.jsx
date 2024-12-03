@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import './Drafts.css';
+import './Trades.css';
 import axios from 'axios';
 import { useRecoilValue } from 'recoil';
 import { selectedSportAtom, changedSportSelector } from '../../recoil/Sport';
 import { useNavigate, useLocation } from 'react-router-dom';
-//import { team_id } from '../../recoil/AuthAtom';
+import { isLoginSelector } from '../../recoil/AuthAtom';
+//import {team_id} from '../../recoil/AuthAtom';
 
-const Drafts = () => {
+
+const Trades = () => {
     const navigate = useNavigate();
 
     // Recoil state for selected sport
@@ -15,6 +17,7 @@ const Drafts = () => {
     const urlParams = new URLSearchParams(location.search);
     const leagueId = urlParams.get('leagueId');
     const teamId = urlParams.get('teamId');
+
 
     // State for draft player data and pagination
     const [players, setPlayers] = useState([]);
@@ -25,8 +28,8 @@ const Drafts = () => {
         per_page: 5,
     });
 
-    // Fetch players from API
-    const fetchDraftPlayers = async (page = 1) => {
+    // Fetch playersteams from API
+    const fetchPlayersTeams = async (page = 1, playerId = null, teamId = null, leagueId = null) => {
         try {
             const tokens = JSON.parse(localStorage.getItem('tokens'));
             if (!tokens || !tokens.access) {
@@ -35,28 +38,31 @@ const Drafts = () => {
                 return;
             }
             const accessToken = tokens.access;
-
-            const response = await axios.get('http://127.0.0.1:5000/get_players', {
+    
+            // Fetch data from the /get_playersteams endpoint
+            const response = await axios.get('http://127.0.0.1:5000/get_playersteams', {
                 headers: {
                     Authorization: `${accessToken}`,
                 },
                 params: {
                     page,
                     per_page: pagination.per_page,
-                    sport: initializedSports,
+                    player_id: playerId, // Optional filter by Player_ID
+                    team_id: teamId,     // Optional filter by Team_ID
+                    league_id: leagueId, // Optional filter by League_ID
                 },
             });
-
+    
             const data = response.data;
             if (data.error === "Authorization token is missing") {
                 navigate('/login', { replace: true });
             }
-            if (Array.isArray(data.players)) {
-                setPlayers(data.players);
+            if (Array.isArray(data.playersteams)) {
+                setPlayers(data.playersteams);
             } else {
-                console.error('Expected players to be an array, but got:', data.players);
+                console.error('Expected playersteams to be an array, but got:', data.playersteams);
             }
-
+    
             setPagination({
                 total: data.total,
                 pages: data.pages,
@@ -64,69 +70,24 @@ const Drafts = () => {
                 per_page: data.per_page,
             });
         } catch (error) {
-            console.error('Error fetching draft players:', error);
+            console.error('Error fetching player teams:', error);
         }
     };
-
-    useEffect(() => {
-        fetchDraftPlayers();
-    }, [sport]);
     
+    useEffect(() => {
+        fetchPlayersTeams();
+    }, [sport]);
 
     // Handle pagination
     const goToPage = (page) => {
         if (page >= 1 && page <= pagination.pages) {
-            fetchDraftPlayers(page);
+            fetchPlayersTeams(page);
         }
     };
-
-    // Add player to team, creates a playersteams entry
-    const handleAddToTeam = async (playerId, playerName, teamId, leagueId) => {
-        console.log(`Adding player ${playerName} (ID: ${playerId}) to the team.`);
-    
-        try {
-            const tokens = JSON.parse(localStorage.getItem('tokens'));
-            if (!tokens || !tokens.access) {
-                console.error('Access token is missing');
-                navigate('/login', { replace: true });
-                return;
-            }
-            const accessToken = tokens.access;
-    
-            // Prepare request payload
-            const payload = {
-                playerID: playerId,
-                teamID: teamId,
-                leagueID: leagueId,
-            };
-    
-            // Make POST request to the backend
-            const response = await axios.post('http://127.0.0.1:5000/post_playersteams/', payload, {
-                headers: {
-                    Authorization: `${accessToken}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-    
-            // Handle success
-            if (response.status === 201) {
-                console.log('Player successfully added to the team:', response.data.message);
-                alert(`Player ${playerName} successfully added to the team.`);
-            } else {
-                console.warn('Unexpected response:', response.data);
-            }
-        } catch (error) {
-            // Handle errors
-            console.error('Error adding player to the team:', error);
-            alert(`Failed to add player ${playerName} to the team. Please try again.`);
-        }
-    };
-    //const location = useLocation();
-    //const teamName = new URLSearchParams(location.search).get('teamName');
 
     return (
         <div className="biggest">
-            <h1 className="drafts-title">Draft Players</h1>
+            <h1 className="drafts-title">Trade Players</h1>
             <div className="drafts-bground">
                 {players.length > 0 ? (
                     players.map((player) => (
@@ -142,12 +103,7 @@ const Drafts = () => {
                                 <p className="player-stat">Points: {player.FantasyPoints}</p>
                             </div>
                             <button
-                                className="add-to-team-button"
-                                onClick={(e) => {
-                                    handleAddToTeam(player.Player_ID, player.FullName);
-                                    e.target.textContent = 'Player Drafted';
-                                }}
-                            >
+                                className="add-to-team-button">
                                 Draft Player to Team
                             </button>
                         </div>
@@ -178,6 +134,7 @@ const Drafts = () => {
             </div>
         </div>
     );
+
 };
 
-export default Drafts;
+export default Trades;

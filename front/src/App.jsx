@@ -15,9 +15,10 @@ import Teams from './components/Teams/Teams'
 import CreateTeam from './components/Teams/CreateTeam'
 import Matches from './components/Matches/Matches'
 import ProfileSetting from './components/ProfileSetting/ProfileSetting'
-//import PlayerStats from './components/Players/PlayerStats'
+import PlayerStat from './components/Players/PlayerStat'
 import Players from './components/Players/Players'
 import Drafts from './components/Draft/Drafts'
+import Trades from './components/Trade/Trades'
 
 function App() {
   const navigate = useNavigate();
@@ -132,8 +133,12 @@ function App() {
             <Route path="/profile-setting" exact element={<ProfileSetting/>} />
 
             <Route path="/players" exact element={<Players/>} />
+            <Route path="/players/player-stats" exact element={<PlayerStat/>} />
             <Route path="/teams" element={<Teams />} />
             <Route path="/drafts" element={<Drafts />} />
+
+            <Route path="/trades" exact element={<Trades />} />
+
 
 
 
