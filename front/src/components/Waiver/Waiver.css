@@ -1,0 +1,130 @@
+@import url('/src/global.css');
+
+/* Main container for waivers */
+.waivers-container {
+    width: 95%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 20px;
+}
+
+.waivers-title {
+    font-size: 25px;
+    padding: 25px 0;
+}
+
+/* Background for the list of waivers */
+.waivers-bground {
+    background-color: var(--second-gray); /* Slightly different shade */
+    width: 70%;
+    padding: 20px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Individual waiver item */
+.waiver-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    gap: 15px;
+}
+
+/* Player image in the waiver */
+.waiver-img {
+    width: 75px;
+    height: 75px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Information section for a waiver item */
+.waiver-info {
+    display: flex;
+    width: 80%;
+    gap: 5px;
+    align-items: center;
+}
+
+.waiver-info p {
+    flex: 1;
+    text-align: center;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.waiver-name {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.waiver-stat {
+    font-size: 14px;
+    color: gray;
+}
+
+/* Button to claim or release a player */
+.waiver-action-button {
+    padding: 5px 15px;
+    background-color: var(--highlight-color); /* Unique color for waivers */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.waiver-action-button:hover {
+    opacity: 0.9;
+}
+
+.waiver-action-button:disabled {
+    background-color: grey;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Message for no waivers available */
+.no-waivers {
+    text-align: center;
+    color: gray;
+    font-size: 16px;
+}
+
+/* Pagination controls */
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.pagination-controls button {
+    padding: 8px 12px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: var(--highlight-color);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.pagination-controls button:hover:not(:disabled) {
+    background-color: var(--hover-highlight-color);
+}
+
+.pagination-controls button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    background-color: lightgray;
+}
