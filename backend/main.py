@@ -11,7 +11,7 @@ import ignore
 from functools import wraps
 
 CLIENTADDRESS = "http://localhost:5173"
-DATABASENAME = "fsports"
+DATABASENAME = "fsport"
 
 ########################################
 #config starts 
@@ -928,18 +928,16 @@ def update_profile():
         return jsonify({"error": "User ID is required"}), 400
 
     try:
-        # Connect to database
         connection = pymysql.connect(**db_config)
         cursor = connection.cursor()
-
-        # Update the user data in the database
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
         sql = """
             UPDATE users 
             SET Username = %s, Password = %s, Email = %s, 
                 FullName = CONCAT(%s, ' ', %s)
             WHERE User_ID = %s
         """
-        cursor.execute(sql, (username, password, email, first_name, last_name, user_id))
+        cursor.execute(sql, (username, hashed_password, email, first_name, last_name, user_id))
         connection.commit()
 
         return jsonify({"message": "Profile updated successfully"}), 200
