@@ -8,8 +8,8 @@ from flask import g
 import ignore
 from functools import wraps
 
-CLIENTADDRESS = "http://localhost:5173"
-DATABASENAME = "fsports"
+CLIENTADDRESS = "http://127.0.0.1:5173"
+DATABASENAME = "fsport"
 
 ########################################
 #config starts 
@@ -381,6 +381,8 @@ def post_leagues():
     finally:
         cursor.close()
         connection.close()
+
+    
 ########################################
 #leagues related ends
 ########################################
@@ -493,6 +495,132 @@ def get_player_stat():
 
 ########################################
 #players related ends
+########################################
+
+########################################
+#playersteams related starts
+########################################
+
+@app.route('/get_playersteams', methods=['GET'])
+@requires_role("admin", "user")
+def get_playersteams():
+    try:
+        # Fetch query parameters
+        page = request.args.get('page', 1, type=int)  # Default to page 1
+        per_page = request.args.get('per_page', 10, type=int)  # Default to 10 playersteams per page
+        player_id = request.args.get('player_id')  # Optional filter by Player_ID
+        team_id = request.args.get('team_id')  # Optional filter by Team_ID
+        league_id = request.args.get('league_id')  # Optional filter by League_ID
+        offset = (page - 1) * per_page  # Calculate offset for pagination
+
+        # Build base query
+        query = "SELECT * FROM playersteams"
+        params = []
+
+        # Apply filters if provided
+        filters = []
+        if player_id:
+            filters.append("Player_ID = %s")
+            params.append(player_id)
+        if team_id:
+            filters.append("Team_ID = %s")
+            params.append(team_id)
+        if league_id:
+            filters.append("League_ID = %s")
+            params.append(league_id)
+
+        if filters:
+            query += " WHERE " + " AND ".join(filters)
+
+        # Add pagination
+        query += " LIMIT %s OFFSET %s"
+        params.extend([per_page, offset])
+
+        # Execute the query
+        db = pymysql.connect(**db_config)
+        cursor = db.cursor(pymysql.cursors.DictCursor)
+        cursor.execute(query, tuple(params))
+        playersteams = cursor.fetchall()
+
+        # Count total playersteams for pagination
+        count_query = "SELECT COUNT(*) as total FROM playersteams"
+        if filters:
+            count_query += " WHERE " + " AND ".join(filters)
+
+        cursor.execute(count_query, tuple(params[:-2]))  # Exclude pagination params
+        total_entries = cursor.fetchone()['total']
+
+        cursor.close()
+        db.close()
+
+        # Calculate total pages
+        total_pages = (total_entries + per_page - 1) // per_page
+
+        # Prepare response
+        response = {
+            'playersteams': playersteams,
+            'total': total_entries,
+            'pages': total_pages,
+            'current_page': page,
+            'per_page': per_page
+        }
+
+        return jsonify(response), 200
+    except Exception as e:
+        print(f"Error fetching playersteams: {e}")
+        return jsonify({"error": str(e)}), 400
+    
+    
+
+@app.route("/post_playersteams/", methods=['POST', 'OPTIONS'], endpoint="post_playersteams_endpoint")
+@requires_role("admin", "user")
+def post_playersteams():
+    if request.method == 'OPTIONS':
+        # Handle preflight request
+        response = jsonify({"message": "Preflight request successful"})
+        response.headers.add("Access-Control-Allow-Origin", CLIENTADDRESS)
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization") 
+        response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        return response, 200
+
+    # Parse JSON body from the request
+    data = request.get_json()
+    player_id = data.get('playerID')
+    team_id = data.get('teamID')
+    league_id = data.get('leagueID')
+
+    # Validate required fields
+    if not player_id or not team_id or not league_id:
+        return jsonify({'message': 'Missing required fields'}), 400
+
+    connection = pymysql.connect(**db_config)
+    cursor = connection.cursor()
+
+    try:
+        # Insert query to add a new entry to the playersteams table
+        insert_query = """
+            INSERT INTO playersteams (Player_ID, Team_ID, League_ID)
+            VALUES (%s, %s, %s)
+        """
+        cursor.execute(insert_query, (player_id, team_id, league_id))
+        connection.commit()
+
+        return jsonify({'message': 'Player-Team entry created successfully'}), 201
+    except pymysql.IntegrityError as e:
+        connection.rollback()
+        print(f"Integrity Error occurred: {e}")
+        return jsonify({'message': 'Integrity error: Check if the IDs are valid and do not violate constraints'}), 400
+    except Exception as e:
+        connection.rollback()
+        print(f"Error occurred: {e}")
+        return jsonify({'message': str(e)}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
+########################################
+#playersteams related ends
 ########################################
 
 ########################################

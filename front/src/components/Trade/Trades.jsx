@@ -14,6 +14,10 @@ const Trades = () => {
     // Recoil state for selected sport
     const sport = useRecoilValue(selectedSportAtom);
     const initializedSports = useRecoilValue(changedSportSelector);
+    const urlParams = new URLSearchParams(location.search);
+    const leagueId = urlParams.get('leagueId');
+    const teamId = urlParams.get('teamId');
+
 
     // State for draft player data and pagination
     const [players, setPlayers] = useState([]);
@@ -24,8 +28,8 @@ const Trades = () => {
         per_page: 5,
     });
 
-    // Fetch players from API
-    const fetchDraftPlayers = async (page = 1) => {
+    // Fetch playersteams from API
+    const fetchPlayersTeams = async (page = 1, playerId = null, teamId = null, leagueId = null) => {
         try {
             const tokens = JSON.parse(localStorage.getItem('tokens'));
             if (!tokens || !tokens.access) {
@@ -34,28 +38,31 @@ const Trades = () => {
                 return;
             }
             const accessToken = tokens.access;
-
-            const response = await axios.get('http://127.0.0.1:5000/get_players', {
+    
+            // Fetch data from the /get_playersteams endpoint
+            const response = await axios.get('http://127.0.0.1:5000/get_playersteams', {
                 headers: {
                     Authorization: `${accessToken}`,
                 },
                 params: {
                     page,
                     per_page: pagination.per_page,
-                    sport: initializedSports,
+                    player_id: playerId, // Optional filter by Player_ID
+                    team_id: teamId,     // Optional filter by Team_ID
+                    league_id: leagueId, // Optional filter by League_ID
                 },
             });
-
+    
             const data = response.data;
             if (data.error === "Authorization token is missing") {
                 navigate('/login', { replace: true });
             }
-            if (Array.isArray(data.players)) {
-                setPlayers(data.players);
+            if (Array.isArray(data.playersteams)) {
+                setPlayers(data.playersteams);
             } else {
-                console.error('Expected players to be an array, but got:', data.players);
+                console.error('Expected playersteams to be an array, but got:', data.playersteams);
             }
-
+    
             setPagination({
                 total: data.total,
                 pages: data.pages,
@@ -63,18 +70,18 @@ const Trades = () => {
                 per_page: data.per_page,
             });
         } catch (error) {
-            console.error('Error fetching draft players:', error);
+            console.error('Error fetching player teams:', error);
         }
     };
-
+    
     useEffect(() => {
-        fetchDraftPlayers();
+        fetchPlayersTeams();
     }, [sport]);
 
     // Handle pagination
     const goToPage = (page) => {
         if (page >= 1 && page <= pagination.pages) {
-            fetchDraftPlayers(page);
+            fetchPlayersTeams(page);
         }
     };
 

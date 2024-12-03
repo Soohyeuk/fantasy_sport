@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useRecoilValue } from 'recoil';
 import { selectedSportAtom, changedSportSelector } from '../../recoil/Sport';
 import { useNavigate, useLocation } from 'react-router-dom';
+//import { team_id } from '../../recoil/AuthAtom';
 
 const Drafts = () => {
     const navigate = useNavigate();
@@ -11,6 +12,9 @@ const Drafts = () => {
     // Recoil state for selected sport
     const sport = useRecoilValue(selectedSportAtom);
     const initializedSports = useRecoilValue(changedSportSelector);
+    const urlParams = new URLSearchParams(location.search);
+    const leagueId = urlParams.get('leagueId');
+    const teamId = urlParams.get('teamId');
 
     // State for draft player data and pagination
     const [players, setPlayers] = useState([]);
@@ -67,6 +71,7 @@ const Drafts = () => {
     useEffect(() => {
         fetchDraftPlayers();
     }, [sport]);
+    
 
     // Handle pagination
     const goToPage = (page) => {
@@ -75,13 +80,47 @@ const Drafts = () => {
         }
     };
 
-    // Add player to team
-    const handleAddToTeam = (playerId, playerName) => {
+    // Add player to team, creates a playersteams entry
+    const handleAddToTeam = async (playerId, playerName, teamId, leagueId) => {
         console.log(`Adding player ${playerName} (ID: ${playerId}) to the team.`);
-        // You can integrate this with your backend API to add the player to the team.
-        //setDraftedPlayers((prevDrafted) => new Set(prevDrafted).add(playerId));
+    
+        try {
+            const tokens = JSON.parse(localStorage.getItem('tokens'));
+            if (!tokens || !tokens.access) {
+                console.error('Access token is missing');
+                navigate('/login', { replace: true });
+                return;
+            }
+            const accessToken = tokens.access;
+    
+            // Prepare request payload
+            const payload = {
+                playerID: playerId,
+                teamID: teamId,
+                leagueID: leagueId,
+            };
+    
+            // Make POST request to the backend
+            const response = await axios.post('http://127.0.0.1:5000/post_playersteams/', payload, {
+                headers: {
+                    Authorization: `${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+    
+            // Handle success
+            if (response.status === 201) {
+                console.log('Player successfully added to the team:', response.data.message);
+                alert(`Player ${playerName} successfully added to the team.`);
+            } else {
+                console.warn('Unexpected response:', response.data);
+            }
+        } catch (error) {
+            // Handle errors
+            console.error('Error adding player to the team:', error);
+            alert(`Failed to add player ${playerName} to the team. Please try again.`);
+        }
     };
-
     //const location = useLocation();
     //const teamName = new URLSearchParams(location.search).get('teamName');
 
