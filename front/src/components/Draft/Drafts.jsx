@@ -13,7 +13,6 @@ const Drafts = () => {
     const sport = useRecoilValue(selectedSportAtom);
     const initializedSports = useRecoilValue(changedSportSelector);
     const urlParams = new URLSearchParams(location.search);
-    const leagueId = urlParams.get('leagueId');
     const teamId = urlParams.get('teamId');
 
     // State for draft player data and pagination
@@ -81,7 +80,7 @@ const Drafts = () => {
     };
 
     // Add player to team, creates a playersteams entry
-    const handleAddToTeam = async (playerId, playerName, teamId, leagueId) => {
+    const handleAddToTeam = async (playerId, playerName, teamId) => {
         console.log(`Adding player ${playerName} (ID: ${playerId}) to the team.`);
     
         try {
@@ -97,7 +96,6 @@ const Drafts = () => {
             const payload = {
                 playerID: playerId,
                 teamID: teamId,
-                leagueID: leagueId,
             };
     
             // Make POST request to the backend
@@ -144,7 +142,7 @@ const Drafts = () => {
                             <button
                                 className="add-to-team-button"
                                 onClick={(e) => {
-                                    handleAddToTeam(player.Player_ID, player.FullName, teamId, leagueId);
+                                    handleAddToTeam(player.Player_ID, player.FullName, teamId);
                                     e.target.textContent = 'Player Drafted';
                                 }}
                             >
