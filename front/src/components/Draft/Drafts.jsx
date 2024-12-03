@@ -144,7 +144,7 @@ const Drafts = () => {
                             <button
                                 className="add-to-team-button"
                                 onClick={(e) => {
-                                    handleAddToTeam(player.Player_ID, player.FullName);
+                                    handleAddToTeam(player.Player_ID, player.FullName, teamId, leagueId);
                                     e.target.textContent = 'Player Drafted';
                                 }}
                             >
