@@ -12,7 +12,6 @@ const Drafts = () => {
     const sport = useRecoilValue(selectedSportAtom);
     const initializedSports = useRecoilValue(changedSportSelector);
     const urlParams = new URLSearchParams(location.search);
-    const leagueId = urlParams.get('leagueId');
     const teamId = urlParams.get('teamId');
 
     // State for draft player data and pagination
@@ -80,7 +79,7 @@ const Drafts = () => {
     };
 
     // Add or remove player from team
-    const togglePlayerDraft = async (playerId, playerName, teamId, leagueId) => {
+    const togglePlayerDraft = async (playerId, playerName, teamId ) => {
         if (draftedPlayers.has(playerId)) {
             // Undraft the player
             try {
@@ -95,7 +94,6 @@ const Drafts = () => {
                 const payload = {
                     playerID: playerId,
                     teamID: teamId,
-                    leagueID: leagueId,
                 };
 
                 const response = await axios.delete('http://127.0.0.1:5000/delete_playersteams/', {
@@ -136,7 +134,6 @@ const Drafts = () => {
                 const payload = {
                     playerID: playerId,
                     teamID: teamId,
-                    leagueID: leagueId,
                 };
 
                 const response = await axios.post('http://127.0.0.1:5000/post_playersteams/', payload, {
@@ -180,7 +177,7 @@ const Drafts = () => {
                             <button
                                 className="add-to-team-button"
                                 onClick={() =>
-                                    togglePlayerDraft(player.Player_ID, player.FullName, teamId, leagueId)
+                                    togglePlayerDraft(player.Player_ID, player.FullName, teamId)
                                 }
                             >
                                 {draftedPlayers.has(player.Player_ID) ? 'Player Drafted' : 'Draft Player to Team'}

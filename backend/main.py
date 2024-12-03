@@ -636,10 +636,9 @@ def delete_playersteams():
     data = request.get_json()
     player_id = data.get('playerID')
     team_id = data.get('teamID')
-    league_id = data.get('leagueID')
 
     # Validate required fields
-    if not player_id or not team_id or not league_id:
+    if not player_id or not team_id:
         return jsonify({'message': 'Missing required fields'}), 400
 
     connection = pymysql.connect(**db_config)
@@ -651,7 +650,7 @@ def delete_playersteams():
             DELETE FROM playersteams
             WHERE Player_ID = %s AND Team_ID = %s AND League_ID = %s
         """
-        cursor.execute(delete_query, (player_id, team_id, league_id))
+        cursor.execute(delete_query, (player_id, team_id))
         connection.commit()
 
         # Check if the entry was actually deleted
