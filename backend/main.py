@@ -621,6 +621,54 @@ def post_playersteams():
         cursor.close()
         connection.close()
 
+@app.route("/delete_playersteams/", methods=['DELETE', 'OPTIONS'], endpoint="delete_playersteams_endpoint")
+@requires_role("admin", "user")
+def delete_playersteams():
+    if request.method == 'OPTIONS':
+        # Handle preflight request for CORS
+        response = jsonify({"message": "Preflight request successful"})
+        response.headers.add("Access-Control-Allow-Origin", CLIENTADDRESS)
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        response.headers.add("Access-Control-Allow-Methods", "DELETE, OPTIONS")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        return response, 200
+
+    # Parse JSON body from the request
+    data = request.get_json()
+    player_id = data.get('playerID')
+    team_id = data.get('teamID')
+    league_id = data.get('leagueID')
+
+    # Validate required fields
+    if not player_id or not team_id or not league_id:
+        return jsonify({'message': 'Missing required fields'}), 400
+
+    connection = pymysql.connect(**db_config)
+    cursor = connection.cursor()
+
+    try:
+        # Delete query to remove the entry from the playersteams table
+        delete_query = """
+            DELETE FROM playersteams
+            WHERE Player_ID = %s AND Team_ID = %s AND League_ID = %s
+        """
+        cursor.execute(delete_query, (player_id, team_id, league_id))
+        connection.commit()
+
+        # Check if the entry was actually deleted
+        if cursor.rowcount == 0:
+            return jsonify({'message': 'No matching entry found to delete'}), 404
+
+        return jsonify({'message': 'Player-Team entry deleted successfully'}), 200
+    except Exception as e:
+        connection.rollback()
+        print(f"Error occurred: {e}")
+        return jsonify({'message': str(e)}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
+
 ########################################
 #playersteams related ends
 ########################################
