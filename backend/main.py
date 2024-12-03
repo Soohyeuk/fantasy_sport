@@ -10,7 +10,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import ignore
 from functools import wraps
 
-CLIENTADDRESS = "http://127.0.0.1:5173"
+CLIENTADDRESS = "http://localhost:5174"
 DATABASENAME = "fsport"
 
 ########################################
@@ -590,10 +590,9 @@ def post_playersteams():
     data = request.get_json()
     player_id = data.get('playerID')
     team_id = data.get('teamID')
-    league_id = data.get('leagueID')
 
     # Validate required fields
-    if not player_id or not team_id or not league_id:
+    if not player_id or not team_id:
         return jsonify({'message': 'Missing required fields'}), 400
 
     connection = pymysql.connect(**db_config)
@@ -602,10 +601,10 @@ def post_playersteams():
     try:
         # Insert query to add a new entry to the playersteams table
         insert_query = """
-            INSERT INTO playersteams (Player_ID, Team_ID, League_ID)
-            VALUES (%s, %s, %s)
+            INSERT INTO playersteams (Player_ID, Team_ID)
+            VALUES (%s, %s)
         """
-        cursor.execute(insert_query, (player_id, team_id, league_id))
+        cursor.execute(insert_query, (player_id, team_id))
         connection.commit()
 
         return jsonify({'message': 'Player-Team entry created successfully'}), 201
