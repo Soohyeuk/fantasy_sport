@@ -10,8 +10,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import ignore
 from functools import wraps
 
-CLIENTADDRESS = "http://127.0.0.1:5173"
-DATABASENAME = "fsport"
+CLIENTADDRESS = "http://localhost:5173"
+DATABASENAME = "fsports"
 
 ########################################
 #config starts 

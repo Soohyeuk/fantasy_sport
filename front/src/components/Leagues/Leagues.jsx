@@ -73,11 +73,11 @@ const Leagues = () => {
         navigate(`/leagues/create-league?sport=${sport}`);
     }
     
-    const handleViewTeams = (leagueId, leagueName, leagueType) => {
+    const handleViewTeams = (leagueId, leagueName, leagueType, draftDate) => {
         const urlParams = new URLSearchParams(window.location.search);
         const sport = urlParams.get('sport');
         navigate(`/teams?leagueId=${leagueId}&sport=${sport}`, {
-            state: { leagueName, leagueType }, 
+            state: { leagueName, leagueType, draftDate }, 
         });
     };
 
@@ -103,7 +103,7 @@ const Leagues = () => {
                     {new Date(league.DraftDate).toLocaleDateString()}
                     </p>
                 </div>
-                <button className="view-teams" onClick={() => handleViewTeams(league.League_ID, league.LeagueName, league.LeagueType)}>View Teams</button>
+                <button className="view-teams" onClick={() => handleViewTeams(league.League_ID, league.LeagueName, league.LeagueType, league.DraftDate )}>View Teams</button>
                 </div>
             ))
             ) : (

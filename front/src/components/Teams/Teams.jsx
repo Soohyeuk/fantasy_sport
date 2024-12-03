@@ -13,7 +13,7 @@ const Teams = () => {
     const sport = urlParams.get('sport');
     const leagueName = location.state?.leagueName;
     const leagueType = location.state?.leagueType;
-    const leagueOwner = location.state?.leagueOwner;
+    const draftDate = location.state?.draftDate;
 
     const navigate = useNavigate();
     const [teams, setTeams] = useState([]); 
@@ -89,6 +89,14 @@ const Teams = () => {
     const handleViewDraft = async(leagueId, teamId, owner) => {
         if (currentUser !== owner){
             alert('You do not own this team.');
+            return;
+        }
+        const draftDateObj = new Date(draftDate);
+        const currentTime = new Date();
+        if (currentTime < draftDateObj) {
+            const timeDifference = draftDateObj - currentTime;  
+            const minutesLeft = Math.floor(timeDifference / 1000 / 60);
+            alert(`Draft date is not yet. Time remaining: ${minutesLeft} minutes.`);
             return;
         }
 
